@@ -114,4 +114,4 @@
 **Connection to historical research:**
 [The intro into the digitalmethodsdata was helpful in exposing me on what the possiblities i could use when extracting the text from the museum pictures from just how much data i can have and how to access that dataset using head and str and the $ to pick a segment, I also learned that I need to really think how the split the data of these pictures into varibles and how to capture varibles like location the picture was taken]
 
-
+importdata set, text base

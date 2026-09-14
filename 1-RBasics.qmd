@@ -384,8 +384,13 @@ That gives us the first 6 rows of data. Its really useful if you just want to pe
 (@) The default is to print six rows of data. Can you modify the above code to print out the first 10 rows? 
 ```{r}
 head(gayguides, digits = 10) 
-head(gayguides$title) 1:10
+head(gayguides$title [1:10])
 ```
+```{r}
+head(gayguides, digits = 10) 
+head(gayguides$title [1,10])
+```
+> [1,6] means something different than [1:6] , something is showing up twice $ is column, and [row, colum] cant do both
 
 (@) Can you find the last 6 rows of data? 
 ```{r}
@@ -419,19 +424,31 @@ gayguides$title[500]
 
 (@) The Year variable contains the year (numeric) of each entry. Can you find the earliest year in this dataset? (Using code, don't cheat and use the documentation!)
 ```{r}
-head(gayguides$year)
+head(gayguides$Year)
+tail(gayguides$Year)
+min(gayguides$Year)
+max(gayguides$Year)
+```
+>na.rm is null to find max vaule max (gayguide$Year, na.rm = TRUE)
+
+```{r}
+head(gayguides$Year, digits = 10) 
+```
+```{r}
+head(gayguides$Year) 1:11
+
 ```
 
 
 (@) How about the latest year? 
 ```{r}
-
+head(gayguides$Year[3])
 ```
 
 
 (@) Add another dataset from `DigitalMethodsData`. How many observations are included in this dataset? Run through some of the examples from above to learn about the dataset.
 ```{r}
-data(judges)
+data("censusregions")
 
 ```
 ```{r}
@@ -439,8 +456,7 @@ str(judges)
 ```
 (@) What did you learn about the dataset? What can you tell me about it? 
 
->judges contains info about appoinments and careers of all federal judges with the data set containing 201 varibles that exhaustively describes said careers of federal judges
-
+>judges contains info about appoinments and careers of all federal judges with the data set containing 201 varibles that exhaustively describes said careers of federal judges, Library(DMD)
 
 
 
