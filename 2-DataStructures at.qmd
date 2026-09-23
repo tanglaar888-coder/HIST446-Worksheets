@@ -246,15 +246,17 @@ Notice the above output is _huge_. We can combine `$` and `[` to drill down more
 ```{r}
 gayguides$city[100:110]
 ```
-
+```{r}
+str(gayguides)
+```
 (@) What does this code do? 
 
 >gets rid of duplicates
 
 (@) Can you find all the titles of locations in South Carolina? (Hint: You'll need to use both `$` and `[]`)
+>the gayguides$title is the colmun and to search the rows need to have a [] thus search the rows for the state
 ```{r R.options=list(max.print=10)}
-gayguides["title"]
-gayguides$state[100:110]
+gayguides$title[gayguides$state == "SC"]
 ```
 
 We can also use `$` to create a new column in `gayguides`. 
