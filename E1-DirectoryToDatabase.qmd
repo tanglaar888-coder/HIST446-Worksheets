@@ -1,0 +1,336 @@
+---
+title: "In-Class Exercise: Building a Database of Muncie Directories"
+subtitle: "From a printed source, to a table, to related tables"
+author: ""
+date: ""
+format:
+  html:
+    df-print: paged
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+---
+
+_This is an in-class exercise. Pairs and groups of 3 are welcome, but everyone commits their own work to GitHub. Work through it in class, then commit and push before you leave. It's graded as part of your Reproducibility and Transparency grade._
+
+::: {.callout-note}
+## Why we're doing this
+
+On Monday we explored a few tables from the Freedom on the Move database and asked ourselves: "What is a row in this table? What is the unit of analysis for Freedom on the Move?". We saw how the database splits runaway advertisements into many related tables. Today you'll do the same thing yourself at a smaller scale, and with a source from Muncie: **Emerson's Muncie Directory for 1925–26**, published the year the Lynds' researchers were in town writing *Middletown*. You will:
+
+1. read a page of the directory, as a scan and as machine-read text,
+2. transcribe part of it into a table **by hand** (but using code!),
+3. run an algorithm that transcribes fifteen pages without human intervention, and check its work against yours,
+4. split the result into **related tables**, the way a database like Freedom on the Move does.
+
+The new R tools you'll meet today (`read_csv()`, `filter()`, `select()`, `mutate()`, `count()`, `distinct()`, `left_join()`) are the core of every worksheet from here on.
+:::
+
+## Setup
+
+Everything this exercise needs was installed with Worksheet 2's setup chunk. Make sure you saved this exercise's file in your HIST446/Worksheets/ folder. If you want to be sure, open your 2-DataStructures.md worksheet on a separate tab in RStudio, copy that setup chunk, paste it in your console, and run it. Then, come back to this exercise and continue below.
+
+```{r}
+#| message: false
+library(tidyverse)
+dir.create("output/exercise1", recursive = TRUE, showWarnings = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Part 1: Meet the Source
+
+The Digital Media Repository holds a scan of every page of Muncie's city directories between 1876 to 1928. It also holds the text that OCR (optical character recognition) software extracted from each page. A sample table with fifteen pages of that text is in this repository's `data/` folder.
+
+`read_csv()` reads a file from your computer into a table. In Worksheets 1–3 you loaded data with `data()`, which only works for datasets packaged inside R. From now on, data arrives as files.
+
+```{r}
+pages <- read_csv("data/citydir-1925-sample.csv", show_col_types = FALSE)
+pages
+```
+
+One row per page, and the whole page's text sits in a single cell. That's the opposite of Broman and Woo's "one thing in a cell." Let's read page 206:
+
+```{r}
+page_206 <- pages %>% filter(pagetitle == "Page 206")   # filter() keeps the rows you ask for
+cat(page_206$text)                                       # cat() prints the text with its line breaks
+```
+
+Now look at the **scan** of the same page available online by clicking on this URL: [Page 206 in the Digital Media Repository](https://dmr.bsu.edu/digital/collection/MunCityDirs/id/10723) (printed "202" at the top). The number at the end of that link, `10723`, is the page's `pageptr`: the repository's own ID for this one page, the same number in the `pageptr` column of `pages`. Every page of every digitized volume has one.
+
+(@) Compare the scan with the text above. Name **three** things a reader of the scan knows that the OCR text gets wrong or loses.
+
+>
+
+(@) Find the page in this city directory volume that explains the directory's abbreviations (the table of contents on Page 7 tells you where). What does an asterisk before a name mean?
+
+>
+
+### Where did the sample table you loaded with `read_csv()` come from?
+
+The file in `data/` was made by asking the repository for each page's text, one page at a time. You can ask for page 206 yourself. Its address is an ordinary URL, built from the collection's name (`MunCityDirs`) and the page's pointer (`10723`):
+
+```{r}
+page_url <- "https://dmr.bsu.edu/digital/bl/dmwebservices/index.php?q=dmGetItemInfo/MunCityDirs/10723/json"
+
+live <- tryCatch(jsonlite::fromJSON(page_url), error = function(e) NULL) # send thr request to DMR
+
+if (is.null(live)) {
+  message("Couldn't reach the repository right now. Carry on with the saved copy.")
+} else {
+  live_text <- trimws(live$full)    
+}
+```
+
+(@) Notice the object that was fetched from the JSON request `live`. It's a list 66 elements. Go back to the scan of Page 206 at the DMR website. Can you figure out what those 66 elements refer to?
+
+>
+
+The repository answered with a whole record for this one page. In a future worksheet, you'll write a loop that does this for many pages, politely. By the end of this code, we saved just one field, `full`, as `live_text`. 
+
+(@) Which three of the 66 fields became the three columns in `pages`?
+
+>
+
+(@) Run the code chunk below to create a one-row table from the `live` object that has the same columns as the `pages` table and the values for page 206.
+```{r}
+if (!is.null(live)) {
+  live_206 <- tibble(
+    pagetitle = live$title,               
+    pageptr   = as.numeric(live$dmrecord),  
+    text      = trimws(live$full)
+  )
+}
+
+identical(live_206, as_tibble(page_206)) # check to see if both are identitical
+```
+
+(@) Explain each line in the code above. Remember: You can type `?function()` in your console to access the documentation for any of the functions used above. For example, write `?trimws` and see what happens.
+
+> 
+
+------------------------------------------------------------------------
+
+## Part 2: Transcribe by Hand
+
+Before a computer does anything, a historian decides what a row is and what the columns are. The code below is a template. It shows you how to start to create a table of entries from page 206, with one row filled in (Carl S. Davis, the third entry on the page). It's built with `tribble()`, which you write one row at a time. Each `~` names a column.
+
+Notice that I already decided how to name the columns in this case. But you can (and maybe should) have a different idea about how this table should look like.
+
+```{r}
+by_hand <- tribble(
+  ~entry, ~surname, ~given,    ~spouse,    ~asterisk, ~occupation,                         ~employer,                ~address,    ~housing, ~notes,
+  3,      "Davis",  "Carl S.", "Naomi O.", FALSE,     "secretary, treasurer and cashier", "Muncie Water Works Co.", "200 Queen", "res",    "Work address (316 S. Mulberry) has no column. OCR reads Naomi's initial as a zero."
+)
+
+by_hand
+```
+
+A few rules I followed, all from our readings on spreadsheets and databases:
+
+- **Transcribe what the page says.** Keep "Chas." as "Chas." If the printed page abbreviates, you record the abbreviation. Standardizing is a separate, later decision.
+- **`NA` means the source doesn't say.** It's not the same as a blank or a zero.
+- `housing` records the directory's own abbreviation: `res` (residence), `rooms`, or `bds` (boards). So I'm keeping these abbreviations as data points.
+- `notes` is where doubts, observations, and detailed information for future reference go.
+
+(@) Add **Calvin Davis** (the entry just above Carl) and **the five people listed after Carl** on page 206 to `by_hand`, reading from the **scan**, not the OCR. Copy the pattern above separating columns with commas. Run the chunk to check it works. 
+
+Notice: if you look closely, the mark before Calvin Davis's name is clear in the scan, but not as clear in the OCR text.
+
+```{r}
+
+```
+
+(@) Your table has no row for Naomi, Pauline, or Anna, the wives in parentheses, and no column for a second job (look a few lines further down at Chas. S. Davis). What did the directory's publisher decide about women in these households? What could you do differently when building this table?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 3: Transcribe by Machine
+
+The directory's entries follow a formula (*Surname Given (Wife), occupation, employer, res. address*), so a computer can transcribe them with **regular expressions**, patterns that describe text. Don't worry about learning how to read these expressions for now. Today,simply **run** the chunk below, skim the comments, and look at what it produces.
+
+```{r}
+#| code-fold: true
+# 1. One row per printed line
+lines <- pages %>%
+  separate_longer_delim(text, delim = "\n") %>%
+  rename(line = text) %>%
+  mutate(line = str_squish(line)) %>%
+  filter(line != "")
+
+# 2. Glue wrapped lines back into entries. A new entry starts with a capitalized
+#    surname and a capitalized first name, optionally after an asterisk.
+entries <- lines %>%
+  mutate(entry_id = cumsum(str_detect(line, "^\\*?\\s?[A-Z][a-z'-]+ (Mrs\\. )?[A-Z]"))) %>%
+  group_by(pagetitle, entry_id) %>%
+  summarize(entry = str_c(line, collapse = " "), .groups = "drop") %>%
+  mutate(entry = str_replace_all(entry, "-\\s", ""))
+
+# 3. Pull out the parts
+name_pattern <- "^\\*?\\s?[A-Z][a-z'-]+(\\s(Mrs\\.|[A-Z][A-Za-z]*\\.?|jr\\.))*(\\s\\([^)]*\\))?,?"
+
+by_machine <- entries %>%
+  mutate(
+    asterisk   = str_detect(entry, "^\\*"),
+    name       = str_extract(entry, name_pattern) %>% str_remove("^\\*\\s?") %>%
+                   str_remove(",$") %>% str_squish(),
+    surname    = word(name, 1),
+    given      = str_remove(name, "^\\S+\\s?") %>% str_remove("\\s?\\(.*$"),
+    spouse     = str_match(name, "\\(([^)]+)\\)")[, 2],
+    rest       = str_remove(entry, name_pattern) %>% str_squish(),
+    occupation = str_extract(rest, "^(?!res\\b|rooms\\b|bds\\b)[a-z][^,]*?(?=,|\\s(res|rooms|bds)\\b|$)"),
+    housing    = str_match(entry, "\\b(res|rooms|bds)\\b")[, 2],
+    address    = str_match(entry, "\\b(?:res|rooms|bds)\\b\\.?,?\\s+(.+)$")[, 2]
+  ) %>%
+  select(pagetitle, entry_id, entry, asterisk, surname, given, spouse, occupation, housing, address)
+
+by_machine
+```
+
+In a few seconds the computer "transcribed" fifteen pages. Now check its work against yours. `select()` keeps the columns you name:
+
+```{r}
+by_machine %>%
+  filter(pagetitle == "Page 206") %>%
+  select(entry, surname, given, asterisk, occupation, address) %>%
+  head(12)
+```
+
+(@) Compare the machine's rows for your six people with your hand transcription. Where does the machine disagree with you? Look especially at Calvin Davis, whose entry begins with an odd mark in the OCR text, and at Chas. S. Davis, whose entry runs over three lines.
+
+>
+
+(@) `count()` tallies rows. Run the code below.
+
+```{r}
+by_machine %>% count(is.na(address))
+```
+
+(@) What share of entries has no `address`? Use `filter(is.na(address))`).
+
+```{r}
+
+```
+
+(@) Pick two of the entries without addresses and try to explain why the parser failed.
+
+>
+
+------------------------------------------------------------------------
+
+## Part 4: One Table Becomes a Database
+
+Look again at page 206. Several Davises share an address: 1401 Manor appears three times, and 523 Brotherton twice. In a single flat table, an address gets typed once per person. If a street was mistyped, you'd have to fix it in every row, and you couldn't easily ask "who lived *here*?"
+
+A relational database solves this the way Freedom on the Move does. **Each kind of thing gets its own table, with an ID**, and the relationships between things get tables of their own. We'll build three:
+
+| Our table | One row is... | Like FOTM's... |
+|-----------|---------------|----------------|
+| `people`  | a person listed in the directory | `enslaved_person`, `enslaver` |
+| `addresses` | a distinct street address | `location` |
+| `residences` | *this person* lived at *this address* | `runaway_location`, which links a runaway to a place with a `type` ("ran," "jailed"...) |
+
+First, keep only the entries that look like people with an address:
+
+```{r}
+directory <- by_machine %>%
+  filter(!is.na(surname), !is.na(address)) %>%
+  mutate(person_id = row_number())      # row_number() numbers the rows 1, 2, 3...
+
+nrow(directory)
+```
+
+**The `people` table.** `select()` keeps just the columns that describe a person:
+
+```{r}
+people <- directory %>%
+  select(person_id, surname, given, spouse, asterisk, occupation)
+people
+```
+
+**The `addresses` table.** `distinct()` keeps each address only once. Then we give each one an ID:
+
+```{r}
+addresses <- directory %>%
+  distinct(address) %>%
+  mutate(address_id = row_number()) %>%
+  select(address_id, address)
+addresses
+```
+
+**The `residences` table**, which links the two. `left_join()` matches rows from two tables that share a column (here, `address`) and brings the `address_id` across:
+
+```{r}
+residences <- directory %>%
+  left_join(addresses, by = "address") %>%
+  select(person_id, address_id, housing)
+residences
+```
+
+Look at `residences`. It's just numbers, but it holds the relationships. Now the database answers questions a flat list can't answer easily. Which addresses house more than one person?
+
+```{r}
+shared <- residences %>%
+  count(address_id, name = "people_here") %>%
+  filter(people_here > 1) %>%
+  left_join(addresses, by = "address_id") %>%   # bring the address text back
+  arrange(desc(people_here))
+
+shared
+```
+
+Look at the top of the list. "same" isn't an address: it's the directory's shorthand for "lives at the business address just given" (look for "res. same" in the text). It's a value that looks like data but has to be interpreted. For now we'll set it aside, and ask who lived at the most crowded **real** address by joining all three tables back together:
+
+```{r}
+crowded <- shared %>% filter(address != "same") %>% slice(1)   # slice(1) keeps the first row
+
+residences %>%
+  filter(address_id == crowded$address_id) %>%
+  left_join(people, by = "person_id") %>%
+  left_join(addresses, by = "address_id") %>%
+  select(surname, given, occupation, housing, address)
+```
+
+(@) Seven people "live" at `same`. Write down what you'd do with those rows in a real project: delete them, look up the business address from each entry, or something else? What would each choice do to a count of shared addresses?
+
+>
+
+(@) The same surname at the same address suggests a family, but the database only **records** a shared address. Pick one shared address from `shared`. What might the people there be to each other? What could you check (another page, another year of the directory, the census) to find out? What does the `housing` column (`res` vs. `rooms` vs. `bds`) add?
+
+>
+
+(@) Freedom on the Move stores names in their own table (`enslaved_person_name`), with a column `is_alias`, because one person can appear under several names. Our `people` table has one name per person, and wives appear only inside parentheses. Sketch (in words) one more table you'd add to our database to fix one of these problems. What would one row be, and what would its columns be?
+
+>
+
+(@) Our `asterisk` column comes from a racial classification the publisher printed next to some names. A database makes a column like that very easy to count, map, and join. Name one question a historian could responsibly ask with it, and one way it could be misused.
+
+>
+
+------------------------------------------------------------------------
+
+## Save, Commit, Push
+
+Tables go in `output/`. These pages were published in 1925 and are in the public domain, so they're fine to commit.
+
+```{r}
+write_csv(people,     "output/exercise1/people.csv")
+write_csv(addresses,  "output/exercise1/addresses.csv")
+write_csv(residences, "output/exercise1/residences.csv")
+write_csv(by_hand,    "output/exercise1/my_transcription.csv")
+```
+
+In GitHub Desktop, commit this file and the `output/exercise1/` folder with a message like "Exercise: city directory to relational tables," then **Push origin**.
+
+------------------------------------------------------------------------
+
+::: {.callout-tip}
+## What's next
+
+The worksheets from here on run on this same cycle: **source → table → related tables → question → figure**, with every decision written down. Two bodies of material will come back again and again, and either can become the basis of your final project if you haven't found data of your own:
+
+- **Muncie sources in Ball State's Digital Media Repository**: the city directories (1876–1928) and the oral history collections. In Worksheet 5 you'll download pages like these yourself, straight from the repository, with a loop.
+- **Freedom on the Move**: the full set of its relational tables (the schema we looked at on Monday). Everything you did in Part 4 (IDs, junction tables, `left_join()`) is exactly how you'll put its tables back together to ask your own questions of thousands of runaway advertisements.
+:::
