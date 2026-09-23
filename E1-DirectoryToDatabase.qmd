@@ -1,9 +1,9 @@
 ---
 title: "In-Class Exercise: Building a Database of Muncie Directories"
 subtitle: "From a printed source, to a table, to related tables"
-author: ""
-date: ""
-format:
+author: "Aaron Tanglertpaibul"
+date: "9/23/2026"
+format: .qmd
   html:
     df-print: paged
     toc: true
@@ -52,7 +52,7 @@ pages
 One row per page, and the whole page's text sits in a single cell. That's the opposite of Broman and Woo's "one thing in a cell." Let's read page 206:
 
 ```{r}
-page_206 <- pages %>% filter(pagetitle == "Page 206")   # filter() keeps the rows you ask for
+page_206 <- pages %>% filter(pagetitle == "Page 206")   # filter() keeps the rows you ask for, thus to read page 206 one filters the page and uses == to find the page title
 cat(page_206$text)                                       # cat() prints the text with its line breaks
 ```
 
@@ -60,11 +60,16 @@ Now look at the **scan** of the same page available online by clicking on this U
 
 (@) Compare the scan with the text above. Name **three** things a reader of the scan knows that the OCR text gets wrong or loses.
 
->
+>The reader loses the sideways writing on the page. loses the text that is in different fonts and is in a nonstanderd placement. anything handwritten margins will be lost
 
 (@) Find the page in this city directory volume that explains the directory's abbreviations (the table of contents on Page 7 tells you where). What does an asterisk before a name mean?
 
->
+```{r}
+page_007 <- pages %>% filter(pagetitle == "Page 007")   # filter() keeps the rows you ask for, thus to read page 206 one filters the page and uses == to find the page title
+cat(page_007$text)   
+```
+
+>the astrisk means colored
 
 ### Where did the sample table you loaded with `read_csv()` come from?
 
@@ -84,13 +89,15 @@ if (is.null(live)) {
 
 (@) Notice the object that was fetched from the JSON request `live`. It's a list 66 elements. Go back to the scan of Page 206 at the DMR website. Can you figure out what those 66 elements refer to?
 
->
+>by clicking blue button on live shows that the 66 is each piece of information plus the metadata. 
 
 The repository answered with a whole record for this one page. In a future worksheet, you'll write a loop that does this for many pages, politely. By the end of this code, we saved just one field, `full`, as `live_text`. 
 
 (@) Which three of the 66 fields became the three columns in `pages`?
 
->
+>pagetitle corresponds to element title
+pageptr is the identifying number and corresponds to element dmrecord
+text is the text and corresponds to element full
 
 (@) Run the code chunk below to create a one-row table from the `live` object that has the same columns as the `pages` table and the values for page 206.
 ```{r}
@@ -106,9 +113,36 @@ identical(live_206, as_tibble(page_206)) # check to see if both are identitical
 ```
 
 (@) Explain each line in the code above. Remember: You can type `?function()` in your console to access the documentation for any of the functions used above. For example, write `?trimws` and see what happens.
+```{r}
+?function()
+```
+##trimws removes the leading and or trailing whitespace from character strings
+trimws(x, which = c("both", "left", "right"), whitespace = "[ \t\r\n]")
+Arguments
+x	
+a character vector.
 
-> 
+which	
+a character string specifying whether to remove both leading and trailing whitespace (default), or only leading ("left") or trailing ("right"). Can be abbreviated.
 
+whitespace	
+a string specifying a regular expression to match (one character of) “white space”, see Details for alternatives to the default.
+Details
+Internally, sub(re, "", *, perl = TRUE), i.e., PCRE library regular expressions are used. For portability, the default ‘whitespace’ is the character class [ \t\r\n] (space, horizontal tab, carriage return, newline). Alternatively, [\h\v] is a good (PCRE) generalization to match all Unicode horizontal and vertical white space characters, see also https://www.pcre.org.
+Examples
+Run examples
+
+x <- "  Some text. "
+x
+trimws(x)
+trimws(x, "l")
+trimws(x, "r")
+
+## Unicode --> need "stronger" 'whitespace' to match all :
+tt <- "text with unicode 'non breakable space'."
+xu <- paste(" \t\v", tt, "\u00a0 \n\r")
+(tu <- trimws(xu, whitespace = "[\\h\\v]"))
+stopifnot(identical(tu, tt))
 ------------------------------------------------------------------------
 
 ## Part 2: Transcribe by Hand
@@ -135,10 +169,21 @@ A few rules I followed, all from our readings on spreadsheets and databases:
 
 (@) Add **Calvin Davis** (the entry just above Carl) and **the five people listed after Carl** on page 206 to `by_hand`, reading from the **scan**, not the OCR. Copy the pattern above separating columns with commas. Run the chunk to check it works. 
 
-Notice: if you look closely, the mark before Calvin Davis's name is clear in the scan, but not as clear in the OCR text.
+Notice: if you look closely, the mark before Calvin Davis's name is clear in the scan, but not as clear in the OCR text. Davis Calvin, laborer, res. 923 Penn, Whiteley
+
+by_hand %>% add_row(entry)
+df<-tibble (column x x = 1:3, y +3:1)
+df <- df %>% add_row (x = 4, y= 1)
+by_hand <- by_hand %<% add_row(entry = 4, surname ="" , given + "", spuse = "", asterisk + FALSE, occupation = "", employer = "", address = "", housing = "", notes = "") 
+
 
 ```{r}
+by_hand <- tribble(
+  ~entry, ~surname, ~given,    ~spouse,    ~asterisk, ~occupation,                         ~employer,                ~address,    ~housing, ~notes,
+  2,      "Davis",  "Calvin", "NA", FALSE,     "laborer", "Muncie Water W", "200 Queen", "res",    "Work address (316 S. Mulberry) has no column. OCR reads Naomi's initial as a zero."
+)
 
+by_hand
 ```
 
 (@) Your table has no row for Naomi, Pauline, or Anna, the wives in parentheses, and no column for a second job (look a few lines further down at Chas. S. Davis). What did the directory's publisher decide about women in these households? What could you do differently when building this table?
