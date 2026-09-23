@@ -1,7 +1,7 @@
 ---
 title: "Worksheet 2: Data Structures"
-author: ""
-date: ""
+author: "Aaron Tanglertpaibul"
+date: "9/20/2026"
 format:
   html:
     df-print: paged
@@ -68,6 +68,10 @@ x <- c(15.4, 25, 2, 8.35, 5, 383, 10.2)
 
 If you type `x` into your console, you will see that all of the values are printed out and preceded by a `[1]`. What the `[1]` refers to is that first number, 15.4. Its position in the list is 1. Each number in our list has an index number and that is how you retrieve specific positions in this vector. 
 
+```{r}
+x
+```
+
 For example, we can use a positive integer to return elements at specific positions. Lets grab the value in the 3rd and 5th position.
 ```{r}
 x[c(3,5)]
@@ -83,7 +87,7 @@ x[c(3,3)]
 ```
 (@) Create your own vector and return three values using the subsetting method above. 
 ```{r}
-
+x[c(4,6,7)]
 ```
 
 
@@ -94,7 +98,7 @@ x[-c(3, 1)]
 
 (@) What happened here? Describe this in your own words. 
 
->
+>the third and first vector are omitted.
 
 You can use either positive or negative integers to subset a vector but you **cannot mix the two**.
 
@@ -111,7 +115,7 @@ x[x > 7]
 
 (@) What is going on in each of the lines above? Describe it in your own words. 
 
->
+>108 checks the values against the true value and lists the true one.
 
 Nothing returns the original vector. This isn't that useful here but can come in handy when you have more complex structures like matrices and arrays. 
 ```{r}
@@ -124,6 +128,7 @@ If your vector is named, you can also use character vectors to return elements w
 y[c("d")]
 ```
 (@) What happened here? Explain this in your own words. 
+>assigns names to vectors and lists vector when given name
 
 #### Matrices
 
@@ -142,12 +147,12 @@ In the `matrix()` function:
 
 (@) You try now, create a matrix that had five rows with numbers that range from 25 to 49. 
 ```{r}
-
+matrix(25:49, byrow = TRUE, nrow = 5)
 ```
 
 (@) Can you create a matrix that has 3 rows with only even numbers from 2 to 18? 
 ```{r}
-
+matrix(2:18, byrow = TRUE, nrow = 3)
 ```
 
 ##### Subsetting Matricies 
@@ -188,7 +193,7 @@ data("gayguides")
 
 To subset this data we could pull two particular columns like this: 
 ```{r}
-#gayguides[2:3]
+gayguides[2:3]
 ```
 That returns columns 2 and 3 (including every single row!). 
 
@@ -199,31 +204,41 @@ gayguides[1:3,]
 
 (@) Why is this different? What do we get compared to the previous example? 
 
->
+>202, the comma expanded how many columns displayed
 
 (@) Can you find just the city and state for the first 5 entries? 
 ```{r}
-
+gayguides$city[1:5]
 ```
 
 (@) How about the street address and type for rows 2,555 to 2,560?
 
 ```{r}
-
+gayguides$streetaddress[2555:2560]
+gayguides$type[2555:2560]
 ```
 
 (@) Load another dataset from `DigitalMethodsData`. Subset it to find some element of the data. Write the code below and then explain what element of the data you wanted to subset and why:
 ```{r}
-
+library(DigitalMethodsData)
+data("judges")
+```
+```{r}
+judges[1:4,]
+```
+```{r}
+help(package="DigitalMethodsData")
 ```
 
-> 
+> i subset to see the varibles
 
 Another useful operator to know is `$` which we used a little bit in the previous worksheet. `$` is shorthand for accessing a variable in a dataframe. 
  
 So for example both of these produce the same result. One is just easier to type. Because the output here is so large, I've commented these two lines out. Uncomment them and the run the block.
 ```{r R.options=list(max.print=10)}
 #gayguides["title"]
+```
+```{r R.options=list(max.print=10)}
 #gayguides$title
 ```
 
@@ -234,11 +249,12 @@ gayguides$city[100:110]
 
 (@) What does this code do? 
 
->
+>gets rid of duplicates
 
 (@) Can you find all the titles of locations in South Carolina? (Hint: You'll need to use both `$` and `[]`)
-```{r}
-
+```{r R.options=list(max.print=10)}
+gayguides["title"]
+gayguides$state[100:110]
 ```
 
 We can also use `$` to create a new column in `gayguides`. 
@@ -273,6 +289,8 @@ Stick with `%>%` in your worksheets so your code matches the examples. But when 
 
 (@) Use the pipe to subset the gayguides data to get the title column, then look at the first 20 entries.
 ```{r}
+head(gayguides, 20)
+gayguides %>% head(20)
 ```
 
 ## Putting It All Together: Historical Data Challenges
@@ -284,11 +302,17 @@ Now that you've learned about subsetting vectors, matrices, and data frames, let
 (@) Using the `gayguides` data, find all locations in California during the 1970s (1970-1979). 
 Hint: Break this into steps:
    - Step 1: Create a logical vector that identifies California locations
+   > how to find the year in gayguide
    - Step 2: Create a logical vector that identifies 1970s dates
    - Step 3: Combine these conditions
    - Step 4: Use this combined condition to subset the data
-```{r}
+```{r R.options=list(max.print=10)}
+gayguides$Year[1:1]
 
+
+
+#(y <- setNames(x, letters[1:4]))
+#y[c("d")]
 ```
 
 (@) The `amenityfeatures` column contains codes about each location. Can you find all entries that mention "(G)" for girls/women anywhere in their amenity features during 1975? How many locations specifically catered to women that year?
