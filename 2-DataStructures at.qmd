@@ -309,7 +309,7 @@ Hint: Break this into steps:
    - Step 3: Combine these conditions
    - Step 4: Use this combined condition to subset the data
 ```{r R.options=list(max.print=10)}
-gayguides$Year[1:1]
+gayguides$Title[1:1]
 
 
 
