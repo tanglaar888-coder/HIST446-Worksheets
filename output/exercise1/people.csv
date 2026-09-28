@@ -1,0 +1,389 @@
+person_id,surname,given,spouse,asterisk,occupation
+1,Cunningham,Wm. W.,Lorana,FALSE,paper worker
+2,Cunningham,Wm. W. jr.,NA,FALSE,laborer
+3,Cunnington,Annie Mary,NA,FALSE,NA
+4,Cunnington,Chas.,NA,FALSE,laborer
+5,Cunnington,Chas. E.,Ruth M.,FALSE,manager
+6,Cunnington,David,Rachel,FALSE,laborer
+7,Cunnington,Jonathan,Fern M.,FALSE,salesman
+8,Cunnington,Mary E.,NA,FALSE,vvidow of Richard
+9,Cunnington,Richard J.,Lola,FALSE,laborer
+10,Cunnington,Samuel L.,NA,FALSE,grocery
+11,Current,Hugh A.,Hazel B.,FALSE,timekeeper
+12,Current,Jean,NA,FALSE,stenographer
+13,Current,Louise,NA,FALSE,student
+14,Current,Lynn R.,Ruby R.,FALSE,salesman
+15,Current,Margaret M.,NA,FALSE,typist
+16,Current,Myron,Helen,FALSE,machinist
+17,Current,Ruby G.,NA,FALSE,telephone operator
+18,Curry,Carrie V.,NA,FALSE,assistant purchasing agent
+19,Curry,Mary E.,NA,FALSE,widow of Richard
+20,Curry,Pearl L.,NA,FALSE,milliner
+21,Curry,Richard E.,NA,FALSE,NA
+22,Curry,Roy,NA,FALSE,foreman
+23,Cuny,Sarah P,NA,FALSE,NA
+24,Curry,Thos. C.,Mollie K.,FALSE,salesman
+25,Curshen,Abe L.,Freda J .,FALSE,manager
+26,Curtis,Albert M,NA,FALSE,NA
+27,Curtis,C. Otto,Daisy M.,FALSE,contractor
+28,Curtis,Chas.,NA,FALSE,NA
+29,Curtis,Crystal I.,NA,FALSE,student
+30,Curtis,Ernest M.,Jeannette,FALSE,NA
+31,Curtis,Fred. D.,Dora Belle,FALSE,NA
+32,Curtis,Geo,NA,FALSE,NA
+33,Curtis,Geo.,Ida,FALSE,laborer
+34,Curtis,Geo,NA,FALSE,NA
+35,Curtis,Helen J.,NA,FALSE,widow of L. C.
+36,Curtis,J,NA,FALSE,as.
+37,Curtis,Jas.,Mary E.,FALSE,eoremaker
+38,Curtis,Mrs. Jeannette, Central B eauty Shop,FALSE,NA
+39,Curtis,John,NA,FALSE,NA
+40,Curtis,John C.,Alma,FALSE,NA
+41,Curtis,John P,NA,FALSE,NA
+42,Curtis,Orpha A.,NA,FALSE,widow of Grant
+43,Curtis,Ralph M,NA,FALSE,NA
+44,Curtis,Walter,Nellie,FALSE,barber
+45,Curtis,Wm., Maude B . ,FALSE,NA
+46,Curts,Arthur L.,Eary M.,FALSE,zincworker
+47,Curts,Floyd,NA,FALSE,paper hanger
+48,Curts,Mrs. Jane,NA,FALSE,NA
+49,Curts,John W.,Cora M.,FALSE,paper h anger
+50,Curts,Reba M,NA,FALSE,NA
+51,Curts,Roscoe G.,Iva E.,FALSE,special agent
+52,Cushing,Chas.,Martha,FALSE,sawyer
+53,Cushing,Howard,NA,FALSE,machinist
+54,Custis,Rev. Dwight L.,Nettie D.,FALSE,pastor First Methodist Protes~ tant Church
+55,Dages,Chas. T.,Grace,FALSE,NA
+56,Dague,Arthur G.,Pansy '11.,FALSE,NA
+57,Dague,Harold L.,M. L. D. & Sons,FALSE,NA
+58,Dague,Michael L.,Selma,FALSE,NA
+59,Dahlke,Delmamarie M.,NA,FALSE,saleslady
+60,Dahlke,Emma E.,NA,FALSE,widow of Fred.
+61,Dahlke,Irene E.,NA,FALSE,cashier
+62,Dailey,Carl,Catherine,FALSE,machinist
+63,Dailey,Edsil L.,NA,FALSE,clerk
+64,Dailey,John,NA,FALSE,NA
+65,Dailey,Orrier W.,Daisy M.,FALSE,laborer
+66,Dailey,Ora A.,Helen I.,FALSE,foreman
+67,Dailey,Ralph E.,Louie I.,FALSE,NA
+68,Daily,Bernard,NA,FALSE,NA
+69,Daily,J,NA,FALSE,as. (Mabel)
+70,Daily,Jos. R.,Emma,FALSE,tester
+71,Daily,Mary,NA,FALSE,NA
+72,Daily,Newton J.,Martha M.,FALSE,laborer
+73,Daily,W. E.,NA,FALSE,manager
+74,Dain,Chester C.,F'ern F.,FALSE,machinist
+75,Dain,Hannah,NA,FALSE,NA
+76,Dain,Roy,Loree,FALSE,laborer
+77,Dairy,Thos. R.,Delphia,FALSE,traffic manager
+78,Dalbesy,Daniel,NA,FALSE,laborer
+79,Dalbey,Forrest R.,Helen L .,FALSE,salesman
+80,Dalbey,Louisa M.,NA,FALSE,widow of Wm.
+81,Dalby,Mrs. Bessie E.,NA,FALSE,deputy
+82,Dalby,Clarence J.,M . Malinda,FALSE,chauffeur
+83,City,Clerk,NA,FALSE,NA
+84,Dalby,W. Ralph,Adlai G.,FALSE,foreman mailing room
+85,Dalby,Wm. R.,Anna M.,FALSE,letter carrier
+86,Dale,Elizabeth S.,NA,FALSE,student
+87,Dale,Geo. R.,Lena P.,FALSE,NA
+88,Dale,Geo. R. jr.,NA,FALSE,NA
+89,Dale,Jas.,NA,FALSE,machinist
+90,Dale,Mary,NA,FALSE,NA
+91,Dalrymple,Lydia,NA,FALSE,widow of J as.
+92,Dalrymple,Simon,NA,FALSE,laborer
+93,Dalton,Chester,NA,FALSE,laborer
+94,Dalton,Christine,NA,FALSE,student
+95,Dalton,J,NA,FALSE,as. W.
+96,Daly,Martin E.,NA,FALSE,manager
+97,Dance,Jess R., Corda A .,FALSE,molder
+98,Dance,Paul,NA,FALSE,laborer
+99,Dance,Raymond E.,NA,FALSE,NA
+100,Danford,Wm. H,NA,FALSE,NA
+101,Danforth,Ode,NA,FALSE,salesman
+102,Danforth,Ray,NA,FALSE,student
+103,Dangler,Harold,NA,FALSE,machinist
+104,Dangler,Jos.,Alice A . ,FALSE,grocery
+105,Daniels,Harl,NA,FALSE,ey M. (Emilia) druggist
+106,Daniels,Mrs. Leuvara,NA,FALSE,bakery
+107,Daniels,Mary,NA,TRUE,NA
+108,Daniels,T,NA,FALSE,heo. M. (Leu vara)
+109,Daniels,Wm. J.,Amanda S . ,FALSE,b lack smith
+110,Danley,Ray C.,Pearl A.,FALSE,sal es manager
+111,Danley,Stella,NA,FALSE,widow of Elwood
+112,Danner,Benj. E.,lea,FALSE,cement worker
+113,Danner,Charlotte,NA,FALSE,widow of Thomas
+114,Danner,F. C.,NA,FALSE,salesman
+115,Danner,Gola,Anna L.,FALSE,NA
+116,Danner,Jos. R.,NA,FALSE,contractor
+117,Danner,Sarah R.,NA,FALSE,widow of Samuel
+118,Dark,E.,NA,FALSE,NA
+119,Dark,Edgar D.,NA,FALSE,salesman
+120,Darling,Mrs. Mary E.,NA,FALSE,NA
+121,Darling,Samuel H.,Ada L.,FALSE,decofator
+122,Darling,Sarah E.,NA,FALSE,widow of Wm.
+123,Darling,Wm.,NA,FALSE,NA
+124,Darnall,Anna Mae,NA,FALSE,telephone operator
+125,Darnell,Chas.,NA,FALSE,clerk
+126,Darnell,John,Ruth,FALSE,laborer
+127,Darnell,John T.,NA,FALSE,watchman
+128,Darr,Frank C.,Mabel G.,FALSE,boltmaker
+129,Darrall,John H.,Sarah,FALSE,steelworker
+130,Darst,Harvey,NA,FALSE,student
+131,Darst,Lucretia,NA,FALSE,widow of Chas.
+132,Darter,Hiram H.,Minnie M.,FALSE,painter
+133,Darter,Perry,NA,FALSE,salesman
+134,Daugherty,Andrew,NA,FALSE,NA
+135,Daugherty,Carl E.,Hazel,FALSE,packer
+136,Daugherty,Carlos Wynn,NA,FALSE,student
+137,Daugherty,Chas.,NA,FALSE,NA
+138,Daugherty,Clayton,Ethel R.,FALSE,carpenter
+139,Daugherty,Eddie,Emma J.,FALSE,assistant foreman
+140,Daugherty,Eliza,NA,FALSE,widow of Wm.
+141,Daugherty,Franklin J.,Edith M.,FALSE,police
+142,Daugherty,Jas.,NA,FALSE,laborer
+143,Daugherty,Jas. S.,NA,FALSE,clerk
+144,Daugherty,Jesse S.,Effiie J.,FALSE,laborer
+145,Daugherty,Lewis S.,Flora M.,FALSE,laborer
+146,Daugherty,Merton, Cora I-t,FALSE,shoemaker
+147,Daugherty,Norman,NA,FALSE,auto mechanic
+148,Daugherty,Wm. A.,NA,FALSE,machinist
+149,Daugherty,Wm. H.,Ethel M.,FALSE,steel hardener
+150,Davenport,Frank,Emma,FALSE,foreman
+151,Davenport,J. Albert,Alta J.,FALSE,laborer
+152,Davenport,Jas. C.,Florence,FALSE,watchman
+153,David,Abraham,NA,FALSE,NA
+154,David,Lula,NA,FALSE,cook
+155,David,Otto,Lula,FALSE,foreman
+156,Davidson,Ethelyn,NA,FALSE,teacher
+157,Davidson,Gaylord,NA,FALSE,agency manager
+158,Davidson,J. Earl,Lela M.,FALSE,manager electrical department
+159,Davidson,Jas. E.,Henrietta,FALSE,NA
+160,Davidson,Mary S.,NA,FALSE,widow of John
+161,Davies,Rev. David,NA,FALSE,NA
+162,Davies,Ernest,Mabel,FALSE,brakeman
+163,Davies,Mabel C.,NA,FALSE,clerk
+164,Davies,R. L.,Domestic Coal Co.,FALSE,NA
+165,Davies,Rachel,NA,FALSE,NA
+166,Davis,Ada,NA,FALSE,widow of Andrew
+167,Davis,Alfred N.,Louise,FALSE,NA
+168,Davis,Allen,Louisa A.,FALSE,molder
+169,Davis,Alvey,NA,FALSE,auto mechanic
+170,Davis,Anna,NA,FALSE,widow of Geo. W.
+171,Davis,Arland R.,Minnie,FALSE,gasfitter
+172,Davis,Arthur,NA,FALSE,salesman
+173,Davis,Arthur M.,NA,FALSE,laborer
+174,Davis,Auto Wrecking Co. Hobart N. Davis,NA,FALSE,proprietor
+175,Davis,Carl S.,Naomi 0.,FALSE,secretary
+176,Davis,Cecil F.,Pauline A.,FALSE,inspector
+177,Davis,Chas.,NA,FALSE,carpenter
+178,Davis,Chas.,NA,FALSE,molder
+179,Davis,Chas. Eugene,NA,FALSE,draftsman
+180,Davis,Chas. H.,Anna E.,TRUE,laborer
+181,Gear,Co.,NA,FALSE,cor. Penn and Clark
+182,Davis,Chas. Wendel,NA,FALSE,NA
+183,Davis,Charline,NA,FALSE,acting registrar Indiana State Normal School
+184,Davis,Charlotte,NA,FALSE,NA
+185,Davis,Colonel,Tenia,TRUE,car washer
+186,Davis,Dahla L.,NA,FALSE,student
+187,Davis,Mrs. Daisy,NA,FALSE,bookkeeper
+188,Davis,Daniel,Della,FALSE,police
+189,Davis,Darrell,NA,FALSE,stock chaser
+190,Davis,David,Lucy,TRUE,laborer
+191,Davis,David,Sarah E.,FALSE,watchman
+192,Davis,David F,NA,TRUE,NA
+193,Davis,David L.,Ethel,FALSE,laborer
+194,Davis,David W.,Mabel,FALSE,manager
+195,Davis,Donald,NA,FALSE,printer
+196,Davis,Edgar C,Nell,FALSE,physician
+197,Davis,Edna E.,NA,FALSE,student
+198,Davis,Edna F.,NA,FALSE,student
+199,Davis,Edward A.,NA,FALSE,salesman
+200,Davis,Edwin M.,Elizabeth,FALSE,foreman
+201,Davis,Ellen M.,NA,FALSE,machine operator
+202,Davis,Elmer D.,NA,FALSE,grocery
+203,Davis,Elmer E.,Laura M.,FALSE,foreman
+204,Davis,Elmer R.,Maude A.,FALSE,shoe repairer
+205,Davis,Elsie,NA,FALSE,student
+206,Davis,Elsie I.,NA,FALSE,stenographer
+207,Davis,Ernest C.,NA,FALSE,laborer
+208,Davis,Ernest F.,Leonore,FALSE,metallurgist
+209,Davis,Evison H.,Lois,FALSE,plasterer
+210,Davis,Floyd J.,NA,FALSE,laborer
+211,Davis,Forest,NA,FALSE,NA
+212,Davis,Frank K.,Laura,FALSE,steam fitter
+213,Davis,Frank M.,Blanche M.,FALSE,painter
+214,Davis,Frank M.,NA,FALSE,polisher
+215,Davis,Frank P.,Amanda,FALSE,laborer
+216,Davis,Frank R.,NA,FALSE,secretary People's Trust Co. 113 S. Walnut
+217,Davis,Fred. P.,Clairbell,FALSE,laborer
+218,Davis,Geo. L.,Nannie M.,FALSE,painter
+219,Davis,Gilbert W.,Leona,FALSE,dairyman
+220,Davis,Glenn W.,Ruby W.,FALSE,laborer
+221,Davis,Gordon B.,Anne,FALSE,NA
+222,Davis,H. Frank,NA,FALSE,drill operator
+223,Davis,Rev. Harlan T.,Gladys E.,FALSE,pastor Nazarene Church
+224,Davis,Hershel,Audrey,FALSE,carpenter
+225,Davis,Hiram,Hazel B.,FALSE,cupola tender
+226,Davis,Hobart N.,NA,FALSE,proprietor Davis Auto Wrecking Co. 906 W. 9th
+227,Davis,Hobart T.,Pauline,FALSE,painter
+228,Davis,Homer,Louella,FALSE,coremaker
+229,Davis,Homer F.,Luella,FALSE,NA
+230,Davis,Homer L.,Carrie M.,FALSE,sewer contractor
+231,Davis,Huelda L.,NA,FALSE,student
+232,Davis,J. Wm.,Dora,FALSE,driver
+233,Davis,Jas.,Cora,FALSE,glassworker
+234,Davis,Jas.,Elizabeth,TRUE,laborer
+235,Davis,J,NA,FALSE,as. D. (Irene)
+236,Davis,Jas. P.,Armella C.,FALSE,NA
+237,Davis,J,NA,FALSE,as. S. (Blanche M.)
+238,Davis,Jean,NA,FALSE,widow of Geo. P.
+239,Davis,Jess,Cecil,FALSE,laborer
+240,Davis,John,NA,FALSE,NA
+241,Motors,Corporation,NA,FALSE,NA
+242,Davis,John,Cathern R.,FALSE,watchman
+243,Davis,John C.,Katie M.,FALSE,NA
+244,Davis,John P.,Hazel M.,FALSE,NA
+245,Davis,John G.,Bertie L.,FALSE,machinist
+246,Davis,John J.,Dollie,FALSE,helper
+247,Davis,John L.,NA,TRUE,cook
+248,Davis,John S.,NA,FALSE,NA
+249,Davis,Mrs. M. Katharine,NA,FALSE,furnished
+250,Davis,Margaret,NA,FALSE,widow of Daniel
+251,Davis,Martha J.,NA,FALSE,widow of John W.
+252,Davis,Marvin F.,Aurelia,FALSE,bus driver
+253,Davis,Mary,NA,FALSE,NA
+254,Davis,Mary F.,NA,FALSE,widow of Jas.
+255,Davis,Maude May,NA,FALSE,NA
+256,Davis,Milton S.,Rosella E.,FALSE,finisher
+257,Davis,Mrs. Nannie,NA,FALSE,music teacher
+258,Davis,Nema,NA,FALSE,NA
+259,Davis,Mrs. Neva,NA,FALSE,NA
+260,Davis,Nina V.,NA,FALSE,NA
+261,Davis,Nova Mae,NA,FALSE,clerk
+262,Davis,Ocah L.,NA,FALSE,student
+263,Davis,Olden,NA,TRUE,laborer
+264,Davis,Omar L.,Ada C.,FALSE,driver
+265,Davis,Orville B.,Wanda N.,FALSE,plumber
+266,Davis,Paul B.,Ruth A.,FALSE,traveling salesman
+267,Davis,Ray D.,Thelma,FALSE,auditor Indiana General Service Co.
+268,Davis,Ray R,Rosie M.,FALSE,truck driver
+269,Davis,Raymond C.,NA,FALSE,laborer
+270,Davis,Richard A.,Annis,TRUE,laborer
+271,Davis,Robt.,Hattie,FALSE,NA
+272,Davis,Robt.,NA,TRUE,laborer
+273,Davis,Robt.,NA,FALSE,stereotyper
+274,Davis,Robt. M.,Edith,FALSE,laborer
+275,Davis,Roma,NA,FALSE,NA
+276,Davis,Ruth,NA,FALSE,nurse
+277,Davis,Sherman B.,Marie M.,FALSE,laborer
+278,Davis,Thos. J.,Daisy,FALSE,laborer
+279,Davis,Mrs. Velma,NA,FALSE,NA
+280,Davis,Vernon G.,Davis Loan & Jewelry Co.,FALSE,NA
+281,Davis,Vernon M.,NA,FALSE,NA
+282,Davis,Walter R.,Ina,FALSE,laborer
+283,Davis,Warren L.,NA,FALSE,heater
+284,Davis,Wayne E.,NA,FALSE,chauffeur
+285,Davis,Wayne,NA,FALSE,l\L molder
+286,Davis,Wm.,Ellen,FALSE,machine operator
+287,Davis,Wm.,Carrie,TRUE,porter
+288,Davis,Wm. E.,NA,FALSE,doorman
+289,Davis,Wm. E.,Ora E.,FALSE,plasterer
+290,Davis,Wm. F.,Maude E.,FALSE,foreman
+291,Davis,Wm. G.,NA,FALSE,teacher
+292,Davis,Wm. H.,NA,FALSE,glassworker
+293,Davis,Wm. I.,Minnie A.,FALSE,grocery
+294,Davis,Wm. J.,Gertrude B.,FALSE,molder
+295,Davis,Wm. L.,Octa J.,FALSE,NA
+296,Davis,Wm. M.,NA,FALSE,NA
+297,Davis,Willis L.,Etta,TRUE,barber
+298,Davison,Alvin, Elizabeth,FALSE,salesman
+299,Davison,Chas.,Maud,FALSE,machinist
+300,Davison,Donald,NA,FALSE,NA
+301,Davison,Mary,NA,FALSE,NA
+302,Davison,Mary,NA,FALSE,widow of Clarence
+303,Davison,Maud,NA,FALSE,core cleaner
+304,Davison,Shirley,NA,FALSE,NA
+305,Davisson,Geo.,NA,FALSE,NA
+306,Davisson,Louie M.,Wilma B.,FALSE,motorman
+307,Davore,Wm. S.,Rosa B.,FALSE,sign painter
+308,Dawley,Leona,NA,FALSE,vvidow of Nathan
+309,Dawson,Delbert,NA,FALSE,foreman tinner
+310,Dawson,Mrs. Effie,NA,FALSE,clerk
+311,Dawson,Ernest C.,Cora A.,FALSE,tinner
+312,Dawson,Esther M.,NA,FALSE,saleslady
+313,Dawson,Gernie A.,Marietta,FALSE,NA
+314,Dawson,Harry J. jr., Clara J.,FALSE,assembler
+315,Dawson,John B.,NA,FALSE,woodworker
+316,Dawson,John E.,Laura J.,FALSE,heater man
+317,Dawson,Lemon A.,Hattie B.,FALSE,NA
+318,Dawson,Margaret M.,NA,FALSE,saleslady
+319,Dawson,Olive D.,NA,FALSE,NA
+320,Dawson,Oliver K.,Ada F.,FALSE,silversmith
+321,Dawson,Ralph,Effie,FALSE,NA
+322,Dawson,Walter W.,Nellie F.,FALSE,baker
+323,Dawson,Wm. E.,NA,FALSE,student
+324,Day,Bernice T.,NA,FALSE,NA
+325,Day,Chas.,NA,FALSE,laborer
+326,Day,Mrs. E.,NA,TRUE,lla
+327,Day,Mrs. Floy M.,NA,FALSE,piano teacher
+328,Herbert,S.,Maude,FALSE,machinist
+329,Day,J,NA,FALSE,as. Luther
+330,Day,Jas. W.,Hannah L.,FALSE,glassworker
+331,Day,Louis A.,NA,TRUE,NA
+332,Day,Lula,NA,FALSE,seamstress
+333,Day,Rev. Marshall M.,Floy M.,FALSE,rector Grace Protestant Epis-copal Church
+334,Day,Oscar,Evalena,FALSE,laborer
+335,Day,Rhea L.,NA,FALSE,bookkeeper
+336,Day,Ruby M.,NA,FALSE,clerk
+337,Nickel,Plate Road,NA,FALSE,NA
+338,Day,Woodford,NA,TRUE,NA
+339,Deady,Jack E.,NA,FALSE,wire drawer
+340,Deal,Mae M.,NA,FALSE,teacher
+341,Deamer,Max,NA,FALSE,student
+342,Dean,F. Sipe,Olethea,FALSE,auto mechanic
+343,Dean,J. Judson,NA,FALSE,president Dean Forging Co. 1825 E. Jackson
+344,Dean,John,NA,FALSE,NA
+345,Dean,Wm. S.,Garnet B. ,FALSE,NA
+346,Oil,Engine Co.,NA,FALSE,s.e.c. Mulberry and C.C.C.&St.L. R.R.
+347,Deardoff,Chas.,Mary,FALSE,la borer
+348,Deardorff,Benj.,Effie A.,FALSE,civil engineer
+349,Deardorff,Cecil R.,NA,FALSE,student
+350,Deardorff,Dorothy,NA,FALSE,student
+351,Deardorff,Eleanor J.,NA,FALSE,student
+352,Deardorff,Frank E.,Florence,FALSE,laborer
+353,Deardorff,Hugh B.,Ruth B.,FALSE,secretary Fire Department
+354,Deardorff,Oliver M.,Nettie P.,FALSE,physician
+355,Dearduff,Mrs. Anna,NA,FALSE,NA
+356,Dearinger,David. H.,Susie,FALSE,agent
+357,Dearinger,John,Minnie,FALSE,salesman
+358,Dearth,Ira E.,Leslie M.,FALSE,letter carrier
+359,Dearth,Pauline E.,NA,FALSE,teacher
+360,Deaton,Grover B.,Lillie M.,FALSE,dairy man
+361,Deaton,Ralph,NA,FALSE,NA
+362,Deavers,John H.,Ida E.,FALSE,laborer
+363,Debs,Margu,NA,FALSE,erite
+364,Decker,David,Sarah R.,FALSE,salesman
+365,Dedrick,John H,NA,FALSE,NA
+366,Deeds,Chas. G.,Dorothy 0.,FALSE,woodworker
+367,Deeds,Chris. C.,Clara J.,FALSE,watchman
+368,Deeds,Gail,NA,FALSE,NA
+369,Deeds,Violet M.,NA,FALSE,student
+370,Deen,Henderson L,NA,FALSE,NA
+371,Deer,Samantha J.,NA,FALSE,widow of Simeon
+372,Deerhake,Christina M.,NA,FALSE,wi dow of Ernest H .
+373,Deerhake,Elizabeth,NA,FALSE,teacher
+374,Deerr,Anna,NA,FALSE,stenographer
+375,Deerr,Frank H,NA,FALSE,NA
+376,Deerr,Frank H. jr.,NA,FALSE,student
+377,Deeter,Jennie,NA,FALSE,widow of Geo.
+378,Defenbacher,J. F.,Helen,FALSE,manager Delaware Hotel
+379,Deffenbaugh,Geo,NA,FALSE,NA
+380,Deffenbaugh,Jos.,NA,FALSE,laborer
+381,Deffenbaugh,Mildred A.,NA,FALSE,clerk
+382,Dehoney,Earl C.,Flora L.,TRUE,barber
+383,Dehoney,Wm. C.,Anna S.,TRUE,barber 202 E. 2d
+384,Deifenbaugh,Lou L.,Gladys M.,FALSE,carpenter
+385,Delaney,Chas. B.,Edna,FALSE,machine operator
+386,Delaney,Clarence C.,Mabel,FALSE,truck driver
+387,Delaney,Goldie M.,NA,FALSE,NA
+388,Delaney,Thos. E.,Mary A.,FALSE,laborer

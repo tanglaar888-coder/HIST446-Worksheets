@@ -174,7 +174,7 @@ Notice: if you look closely, the mark before Calvin Davis's name is clear in the
 by_hand %>% add_row(entry)
 df<-tibble (column x x = 1:3, y +3:1)
 df <- df %>% add_row (x = 4, y= 1)
-by_hand <- by_hand %<% add_row(entry = 4, surname ="" , given + "", spuse = "", asterisk + FALSE, occupation = "", employer = "", address = "", housing = "", notes = "") 
+by_hand <- by_hand %<% add_row(entry = 4, surname ="" , given + "", spouse = "", asterisk + FALSE, occupation = "", employer = "", address = "", housing = "", notes = "") 
 
 
 ```{r}
@@ -188,7 +188,7 @@ by_hand
 
 (@) Your table has no row for Naomi, Pauline, or Anna, the wives in parentheses, and no column for a second job (look a few lines further down at Chas. S. Davis). What did the directory's publisher decide about women in these households? What could you do differently when building this table?
 
->
+>The director probably did not consider that data to be important
 
 ------------------------------------------------------------------------
 
@@ -256,12 +256,12 @@ by_machine %>% count(is.na(address))
 (@) What share of entries has no `address`? Use `filter(is.na(address))`).
 
 ```{r}
-
+by_machine %>% filter(is.na(address)) 
 ```
 
 (@) Pick two of the entries without addresses and try to explain why the parser failed.
 
->
+>there are repeats for many pages 
 
 ------------------------------------------------------------------------
 
