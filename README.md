@@ -23,7 +23,7 @@ First install [GitHub Desktop](https://desktop.github.com/). You'll use it along
 1. At the top right of this page, click **Fork**. This makes your own copy of the repository under your GitHub account. Your copy is where you'll do all your work.
 2. On your fork's page, click the green **Code** button, then **Open with GitHub Desktop**.
 3. When GitHub Desktop asks where to put the folder, choose `Desktop/HIST-446/`.
-4. GitHub Desktop will ask how you plan to use the fork. Choose **To contribute to the parent repository**. This one matters — it's what lets you receive new worksheets later in the semester.
+4. GitHub Desktop will ask how you plan to use the fork. Choose **To contribute to the parent repository**. This is what lets you receive new worksheets later in the semester.
 5. Now open RStudio and go to **File → New Project → Existing Directory**, then select `Desktop/HIST-446/HIST446-Worksheets/`.
 
 Step 5 is what makes RStudio treat the folder as a project. Don't skip it, and from now on always open the worksheets by opening that project rather than opening the `.qmd` files directly.
@@ -36,7 +36,7 @@ It will take a few minutes the first time. Good moment for a short coffee break.
 
 If R asks whether to install from sources a package which needs compilation, answer `n` for no.
 
-### 4. Check that it worked
+### 4. Check that it worked. Run this in your RStudio console:
 
 ```r
 library(tidyverse)
@@ -51,21 +51,16 @@ If you see a table of data, you're good to go!
 
 ## Getting New Worksheets
 
-Worksheets are released over the course of the semester, so new ones appear here after you have already forked and cloned. Your copy does not update itself. When I announce a new worksheet:
+Worksheets and coding exercises are released over the course of the semester, so new ones appear here after you have already forked and cloned. Your copy does not update itself. When I announce a new worksheet or exercise:
 
 1. Open **GitHub Desktop** and make sure the HIST446-Worksheets repository is selected at the top left.
 2. Click **Fetch origin**.
 3. Go to **Branch → Update from upstream/main**.
 4. Click **Push origin** to bring your own copy on GitHub up to date too.
 
-The new worksheet is now in your folder. Switch to RStudio and you'll see it appear in the Files pane — there's nothing to pull on the RStudio side, since GitHub Desktop already brought the files down.
+Any new files will now show up in your local folder. Switch to RStudio, refrehs your Files pane there, and you'll notice new files appear there as well.
 
-**Your own work is safe.** This only adds the new files. Everything you have written stays exactly as it was, and none of your commits are lost.
-
-Two things that occasionally come up:
-
-- **No "Update from upstream/main" in the Branch menu?** That means the fork wasn't set up to track the parent repository. Let me know and we'll fix it in a minute — don't re-clone.
-- **Save your open files first.** If you have unsaved edits in RStudio, save them before step 3 so nothing is half-written while the files update.
+**Your own work is safe.** This only adds the new files or any changes I make on my end. Everything you have written stays exactly as it was, and none of your commits are lost.
 
 ---
 
@@ -79,7 +74,7 @@ Each worksheet is a Quarto document (`.qmd`). It mixes explanation, example code
 4. **Render the document** (click on the Render button) to check it works start to finish. If rendering fails, something in your code is broken. Keep calm, that's useful information and always fixable.
 5. **Commit as you go.** Several small commits is the best way to keep your work progress safe, controlled and traceable. Remember: this is about reproducibility and transparency, and your commit history is part of what I'm looking at for your grade in the course.
 6. **Push to GitHub** and submit the repository link on Canvas to complete a Worksheet assignment.
-7. **Update your learning log** in `logs/`.
+7. **Update your learning log** in `logs/`. See more about the logs below.
 
 ### A note on getting stuck
 
@@ -87,40 +82,15 @@ You will get stuck at some points when completing a Worksheet, and that is a-oka
 
 ---
 
-## The Worksheets
-
-| # | Worksheet | What it covers |
-|---|-----------|----------------|
-| 1 | R Basics | Values, variables, vectors, functions, packages, data frames |
-| 2 | Data Structures | Subsetting, matrices, the pipe |
-| 3 | Loops, Conditionals and Functions | Control flow and writing your own functions |
-| 4 | Basic Data Manipulation | dplyr verbs, `stringr`, regular expressions, missing data, factors |
-| 5 | Advanced Data Manipulation | Grouping, joins, pivots, `forcats`, `lubridate` |
-| 6 | Data Visualization | ggplot2, themes, color, export, visualization as argument |
-| 7 | Exploratory Data Analysis | A workflow for approaching an unfamiliar dataset |
-| 8 | Text Analysis | Corpora, tokenization, stopwords, tf-idf, co-occurrence |
-| 9 | Topic Modeling | Document-term matrices, LDA, topics over time |
-| 10 | Mapping | Geocoding, `sf`, choropleths, interactive maps with leaflet |
-
----
-
 ## Learning Logs
 
-The `logs/` folder contains two templates. Copy the relevant one for each week and fill it in.
+The `logs/` folder contains one template file: `learning-log-template.md`. For every log you complete:
 
-- `coding-log-weeks1-9.md` -- for the first half of the semester
-- `coding-log-weeks10-finals.md` -- adds a section on documenting AI use
-
-You may use AI tools in this course. What I'm asking is that you show your work: what you asked, what came back, what you kept, what you changed, and what you threw away. Critically evaluating an AI model's workflow suggestion is a valuable skill.
-
----
-
-## Data
-
-Most worksheets use the `DigitalMethodsData` package, which the setup chunk in Worksheet 2 installs for you. A few download text corpora from a separate repository; those chunks are marked and the downloaded files are gitignored, so don't worry if they appear in your working directory.
+-  make a copy of that template inside the `logs/` folder.
+-  Rename the copied file using the following format: `YourLastName_LogX.md` where `X`is the log number.
 
 ---
 
 ## Credits
 
-These worksheets were originally written by [Amanda Regan](https://github.com/regan008) for History 8500/8510 at Clemson University, and are adapted here with her permission.
+The original worksheets repository was originally created by [Amanda Regan](https://github.com/regan008) for History 8500/8510 at Clemson University, and is adapted here with her permission. This version of the repository has been significantly adapted for students in HIST 446 at Ball State University. Worksheets and coding assignments in this class draw from local datasets related to Muncie, Indiana and Ball State's Archives & Special Collections. For more information on the data used in this class, please reach out to lucas.avelar@bsu.edu.
