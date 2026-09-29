@@ -20,7 +20,7 @@ glimpse(bellevue)
 #### 1. "Recent emigrant" admissions by month ####
 
 # Count admissions whose reason was "recent emigrant", month by month.
-# floor_date() turns every date into the first day of its month.
+# floor_date() turns every date into the first day of its month. the block wirks by creating varible emigrants by month, filter works by getting all the rows that match this argument reason cleande equals recnt emigrta, mutate adds a new column of month, so it equals floor date and argument date in month, then count shows the month
 emigrants_by_month <- bellevue %>%
   filter(reason_cleaned == "recent emigrant") %>%
   mutate(month = floor_date(date_in, "month")) %>%
@@ -28,7 +28,7 @@ emigrants_by_month <- bellevue %>%
 
 emigrants_by_month
 
-# Your first ggplot: the data, which column goes on each axis, and a geom.
+# Your first ggplot: the data, which column goes on each axis, and a geom. get this varible and assign the varible month to x axis and nummeral to y value then give it a geomnetry 
 ggplot(emigrants_by_month, aes(x = month, y = n)) +
   geom_col()
 
@@ -41,11 +41,16 @@ ggplot(emigrants_by_month, aes(x = month, y = n)) +
 
 # QUESTION: What happens after May 1847? Write down what you think it means
 # before you run the next section.
-
+# there might be a policy shift to halt immigration addmissons and a change i n admission numbers due to outside contexts. could be less people admitted or less people recorded using the same catergory, so change i n category 
 
 #### 2. Did the immigrants stop coming? ####
 
-# Count ALL admissions by month, split into "recent emigrant" and everything else.
+# Count ALL admissions by month, split into "recent emigrant" and everything else. conditional satment of if else, is a value is in this steam then put that trait into column month 
+# if reason cleaned is within the text do this else do this
+# if reason_cleaned
+# %>% "___"
+# {}
+# else {}
 all_by_month <- bellevue %>%
   mutate(month  = floor_date(date_in, "month"),
          reason = if_else(reason_cleaned %in% "recent emigrant",
@@ -59,6 +64,8 @@ ggplot(all_by_month, aes(x = month, y = n, color = reason)) +
   geom_vline(xintercept = as.Date("1847-06-01"), linetype = "dashed") +
   labs(title = "Bellevue Almshouse admissions by month, 1845-1847",
        x = "Month of admission", y = "Admissions", color = "Recorded reason")
+
+#this layer tells a new story of how the label recent emigrant changes in use as admissions still happened
 
 # QUESTION: Total admissions stay high after June 1847, but "recent emigrant"
 # almost disappears. What changed: the people, or the paperwork? What would a
@@ -81,11 +88,11 @@ bellevue %>%
 
 # (b) The ages of the people admitted (a histogram). Why are some bars so much
 #     taller than their neighbors? (Try binwidth = 1.) Look at the far right too:
-#     is every age believable? What should a historian do with them?
+#     is every age believable? What should a historian do with them? binwidth changes width of column
 ggplot(bellevue, aes(x = age_standard)) +
   geom_histogram(binwidth = 5)
 
-# (c) Ages by gender (a boxplot). Try geom_violin() instead of geom_boxplot().
+# (c) Ages by gender (a boxplot). Try geom_violin() instead of geom_boxplot().the age count and standerds is a bit strange if there are many people labled as hundred plus, so data manipulation precocess added some misleading numbers , instinct to talk about the people instead of looking for dicrepency in the numbers 
 ggplot(bellevue, aes(x = gender, y = age_standard)) +
   geom_boxplot()
 
@@ -101,6 +108,7 @@ bellevue %>%
 
 # (e) The top "occupations." Color the bars by gender with aes(fill = gender).
 #     What does it mean that "married," "spinster," and "widow" appear here?
+# need context to walk thorugh interpretations instead of assuming context from interpretations
 bellevue %>%
   count(occupation, gender) %>%
   slice_max(n, n = 12) %>%
@@ -108,3 +116,9 @@ bellevue %>%
   geom_col()
 
 # (f) Choose one of the above visualizations to save to your new output/exercise2/ directory. Commit, then push to GitHub.
+dir.create("output/HIST446-Worksheets", showWarnings = FALSE)
+ggsave("output/HIST446-Worksheets/belluevue_historgram.png, width = 8, height = 5)
+
+dir.create("output/exercise2/", showWarnings = FALSE)
+ggsave("output/exercise2/belluevue_historgram.png", width = 8, height = 5)
+
