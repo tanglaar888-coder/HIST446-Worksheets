@@ -1,3 +1,6 @@
+# FOTM data files
+data/FOTM/
+
 # History files
 .Rhistory
 .Rapp.history
