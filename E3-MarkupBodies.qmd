@@ -1,8 +1,8 @@
 ---
 title: "In-Class Exercise 3: Markup Bodies"
 subtitle: "Decisions hidden inside a database"
-author: ""
-date: ""
+author: "Aaron Tanglertpaibul"
+date: "2026-30-09"
 format:
   html:
     theme: cosmo
@@ -111,7 +111,7 @@ read_fotm <- function(table) {
 Now load the six tables we need:
 
 ```{r}
-# one row per runaway in one ad
+# one row per runaway in one ad can have repeated ads
 runaways        <- read_fotm("runaway") 
 # one row per person
 enslaved_people <- read_fotm("enslaved_person") 
@@ -125,7 +125,7 @@ ads             <- read_fotm("advertisement")
 relationships   <- read_fotm("runaway_relationship")
 ```
 
-We'll often need the advertisement behind a freedom seeker. Let's write a helper function that joins a table of runaways to their event and then to the ad using `left_join()`:
+We'll often need the advertisement behind a freedom seeker. Let's write a helper function that joins a table of runaways to their event and then to the ad using `left_join()`: is very useful in connecting ids, and connects tables, column needs same values across tables, looking for a foreign key in runnawsy that connects to events, runaway id in runaways table has same data as id in events table, select is specifying which colmns are going to be kept. then do similar process with ads table, advertisement table is the foregin key to connect to id. find foregn key to find correlations and join . mutate creats a new colmn, if transcriiption is undefined value then create na 
 
 ```{r}
 with_ads <- function(some_runaways) {
@@ -150,7 +150,7 @@ with_ads <- function(some_runaways) {
 
 (@) Open the `events` and the `ads` tables and identify which columns were used in the code above. To the best of your ability, describe what is happening in the code and how it used specific columns from those tables.
 
-> 
+>  looking for a foreign key in runnawsy that connects to events, runaway id in runaways table has same data as id in events table, select is specifying which colmns are going to be kept. then do similar process with ads table, advertisement table is the foregin key to connect to id. find foregn key to find correlations and join . mutate creats a new colmn, if transcriiption is undefined value then create na
 
 (@) Now give the new function a test. Write a code below that: 1) filters the `runaways` table to only runaways who have ran before; and 2) joins the filtered subset to their respective advertisement transcriptions.
 
@@ -164,8 +164,10 @@ with_ads <- function(some_runaways) {
 :::
 
 ```{r}
+ran_before <- runaways %>% filter(ran_before == "true")
 
-
+ran_before_with_ads <- ran_before %>% with_ads ()
+#ran_before_with_ads <- with_ads(ran_before)
 
 ```
 
@@ -194,7 +196,7 @@ FOTM has several ways of saying "nothing here": an empty cell (`NA` in R), `{und
 
 (@) Discuss with your pair or group and answer: what might be the difference between `NOT_PROVIDED` and `{undefined value}`? Why does it matter which one a cell has?
 
->
+>undefined value means that the data is missing vs not_provided is that someone typed
 
 Now measure how full each field is. The function below counts, for every column you give it, the share of rows with an actual value. `pivot_longer()` is new: it stacks all the columns into two, `field` and `value`, so we can count them all at once.
 
@@ -249,11 +251,12 @@ enslaved_people %>%
 
 (@) Discuss with your pair or group and answer: Which fields are nearly always filled, and which are nearly always empty? Do you see any similarities between the fields that are most commonly filled? What patterns do you see?
 
->
+>The fields that are nearly empty are literacy with 2.1%, ran before 4.6%, profess_freedom is 8.3%
+>while for fileds that are nearly filled [over 80%] with gender at 90.9% and racial_descrption at 85.7%. the fields that are most commonly filled are the most basic of descriptors while the fields that are not filled are more specific 
 
 (@) Is that pattern a fact about the people who ran away, about the enslavers who wrote the ads, or about the volunteers who marked up the ads? Could it be all three? Think of Johnson's article in your answer.
 
->
+>it is a combo of all three, the pattern shows certain facts about the runaways but through the lense of catergorization by the enslavers who wrote the adds and choose what information is needed to catch the runaways, and then the volunteers who marked up the files did so in an unstanderd way
 
 ------------------------------------------------------------------------
 
@@ -508,9 +511,9 @@ Save the tables you made. They're small and made from FOTM by you, so they go in
 
 ```{r}
 write_csv(my_kinship_decisions, "output/exercise2/kinship_decisions.csv")
-write_csv(my_term_decisions,    "output/exercise2/racial_description_decisions.csv")
-```
 
+```
+write_csv(my_term_decisions,    "output/exercise2/racial_description_decisions.csv")
 Before you commit, click on Render to create a new .html file of this exercise. Then, look at the **Changes** list in GitHub Desktop. You should see this file, the new html file, and `output/exercise2/` (two JSON histories, `relationships_clean.csv`, and two decision tables). If anything from `data/FOTM/` appears there, **stop and ask me** before committing.
 
 Commit with a message like "Exercise 2: cleaning FOTM kinship and racial descriptions," then **Push origin**.
