@@ -1,0 +1,150 @@
+/* ==========================================================================
+   1. GLOBAL PAGE STYLING (Solarized Dark)
+   ========================================================================== */
+body {
+  background-color: #002b36 !important; /* Deep teal main background */
+  color: #839496 !important;            /* Balanced body text */
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Headings (H1 - H6) */
+h1, h2, h3, h4, h5, h6 {
+  color: #93a1a1 !important;            /* Brightest title text */
+  border-bottom: 1px solid #586e75;     /* Subtle divider lines */
+}
+
+/* Hyperlinks */
+a {
+  color: #268bd2 !important;            /* Solarized Blue accent */
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+ol.example {
+  padding-left: 0;
+  list-style-position: inside;
+}
+
+/* ==========================================================================
+   2. CODE ELEMENTS (Chunks, Outputs, and Inline Backticks)
+   ========================================================================== */
+/* Inline Code Backticks (Rescued from inheriting global Dracula backgrounds) */
+code:not(pre code) {
+  background-color: #073642 !important; /* Lighter background fill */
+  color: #2aa198 !important;            /* Distinctive solarized cyan text */
+  border: 1px solid #586e75;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+/* Printed R Code Console Outputs (e.g., [1] 4) */
+.cell-output-stdout pre, .cell-output pre {
+  background-color: #2e4247 !important; /* Lighter matching palette background */
+  border-left: 4px solid #586e75 !important;
+  color: #a7c1c4 !important;
+  padding: 10px;
+}
+
+/* Printed output: wrap long lines instead of scrolling */
+.cell-output pre,
+.cell-output pre code {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* Force source code chunks to maintain a dark Dracula background */
+div.sourceCode, div.sourceCode pre {
+  background-color: #282a36 !important; /* Dracula dark background */
+  color: #f8f8f2 !important;            /* Dracula light text */
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   3. CALLOUT BLOCKS BACKGROUND & OVERRIDES
+   ========================================================================== */
+
+/* NOTE */
+.callout-note.callout-style-default {
+  background-color: #daf0ec !important;
+  color: #0d0d0c  !important;
+  border-right: 1px solid #586e75 !important;
+  border-top: 1px solid #586e75 !important;
+  border-bottom: 1px solid #586e75 !important;
+}
+
+.callout-note.callout-style-default .callout-header,
+.callout-note.callout-style-default .callout-title-container {
+  background-color: #26523a !important;
+  color: #f8f8f2 !important;
+  font-weight: bold !important;
+}
+
+.callout-note.callout-style-default .callout-icon::before {
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23f8f8f2" class="bi bi-info-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.396.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>') !important;
+}
+
+/* WARNING */
+.callout-warning.callout-style-default {
+  background-color: #fceee3 !important;
+  color: #0d0d0c !important;
+}
+
+.callout-warning.callout-style-default .callout-header,
+.callout-warning.callout-style-default .callout-title-container {
+  background-color: #6e3715 !important;
+  color: #f8f8f2 !important;
+  font-weight: bold !important;
+}
+
+.callout-warning.callout-style-default .callout-icon::before {
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23f8f8f2" viewBox="0 0 16 16"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg>') !important;
+}
+
+/* CAUTION */
+.callout-caution.callout-style-default {
+  background-color: #422425 !important;
+  color: #f8f8f2 !important;
+}
+
+.callout-caution.callout-style-default .callout-header,
+.callout-caution.callout-style-default .callout-title-container {
+  background-color: #f59396 !important;
+  color: #0d0d0c !important;
+  font-weight: bold !important;
+}
+
+/* TIP */
+.callout-tip.callout-style-default {
+  background-color: #ebf7e7 !important;
+  color: #0d0d0c!important;
+}
+
+.callout-tip.callout-style-default .callout-header,
+.callout-tip.callout-style-default .callout-title-container {
+  background-color: #21580e !important;
+  color: #f8f8f2 !important;
+  font-weight: bold !important;
+}
+/* ==========================================================================
+   4. DATA TABLES (Fixing Grid Lines for Dark Mode)
+   ========================================================================== */
+/* Ensure structural table grids do not vanish */
+table, th, td {
+  border-color: #586e75 !important;     /* Muted Solarized gray borders */
+}
+
+/* Style Table Header Row */
+thead th {
+  background-color: #2e4247 !important;
+  color: #a7c1c4 !important;
+  border-bottom: 2px solid #073642 !important; /* Sharp blue accent line */
+}
+
+/* Alternating Rows (Zebra Striping) */
+tr:nth-child(even) {
+  background-color: ##3a5359 !important; /* Faint secondary row background */
+}

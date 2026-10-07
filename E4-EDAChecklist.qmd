@@ -1,0 +1,404 @@
+---
+title: "In-Class Exercise 4: An Exploratory Data Analysis Checklist"
+subtitle: "Roger Peng's checklist, applied to Freedom on the Move"
+author: ""
+date: ""
+format:
+  html:
+    theme: cosmo
+    highlight-style: dracula
+    code-overflow: wrap
+    css: assets/styles.css
+    df-print: paged
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+---
+
+::: {.callout-note}
+## What is this exercise?
+
+In Exercise 3 you looked closely at how Freedom on the Move (FOTM) records *people*: names, kin, racial descriptions. Today you step back and look at the database as a whole, using a checklist written by the statistician Roger D. Peng for the first look at any new dataset.
+
+This exercise is **adapted from Roger D. Peng, [*Exploratory Data Analysis with R*](https://bookdown.org/rdpeng/exdata/), Chapter 4, "[Exploratory Data Analysis Checklist](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html)."** This chapter, as well as the following one, are listed as your reading for today's class. Peng works through his checklist with a dataset of hourly air pollution readings. Each section below opens with the step from his chapter, summarized, and then applies it to FOTM.
+
+As before, you're graded on your documented effort to understand what you're doing, not on mastery. Start in class (pairs or groups of 3 are welcome), finish at home, and commit your own work to GitHub.
+:::
+
+::: {.callout-warning}
+## Note on harmful language
+
+As in Exercise 3, the ads you'll read describe people in the language of those who enslaved them. We read these words as historical evidence, and we make a commitment as a class to work with these records mindfully and aware of the violence in them. In other words: we will avoid repeating harmful language where it does not contribute to an interpretation or a historical argument.
+:::
+
+## Setup
+
+You need the FOTM tables in `data/FOTM/`, as in Exercise 3. This chunk loads the tidyverse, makes a folder for today's output, and defines `read_fotm()`, the same helper you used in Exercise 3:
+
+```{r}
+#| message: false
+library(tidyverse)
+dir.create("output/exercise4", recursive = TRUE, showWarnings = FALSE)
+
+read_fotm <- function(table) {
+  file <- str_glue("data/FOTM/{table}.csv")
+  suppressWarnings(                                   # the trailing-comma warning from Exercise 3
+    read_csv(file,
+             col_types = cols(.default = col_character()),   # read everything as text, change types later
+             name_repair = "unique_quiet")
+  ) %>%
+    select(-starts_with("...")) %>%                   # drop the empty column the trailing comma creates
+    rename_with(~ .x %>% str_remove("^\\S+ ") %>% str_to_lower())   # "ADVERTISEMENT ID" becomes "id"
+}
+```
+
+------------------------------------------------------------------------
+
+## 1. Formulate your question
+
+> **Peng:** "A sharp question or hypothesis can serve as a dimension reduction tool that can eliminate variables that are not immediately relevant to the question." It's also worth asking early whether you have the right data to answer it. ([Peng, "Formulate your question"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#formulate-your-question))
+
+Peng starts from a broad question ("Are air pollution levels higher on the east coast than on the west coast?") and sharpens it until it names one measure and one unit. We'll do the same. A broad question:
+
+> Where did people escape from slavery?
+
+FOTM can't answer that directly: it holds *advertisements*, not escapes. 
+
+
+(@) Write your own sharp question about FOTM's advertisements: one that names exactly what you'd count or measure, and for what unit (an ad, a newspaper, a state, a decade...).
+
+>
+
+Save your question for a possible future investigation. For the purpose of learning Peng's checklist, we'll pursue a question this database can actually answer:
+
+> In which states were the advertisements in FOTM published?
+
+------------------------------------------------------------------------
+
+## 2. Read in your data
+
+> **Peng:** Read the data in, and note anything you had to do to make it readable. ([Peng, "Read in your data"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#read-in-your-data))
+
+Our question needs three tables: the ads, the newspapers they appeared in, and where those newspapers were published.
+
+```{r}
+ads        <- read_fotm("advertisement")   # one row per ad
+newspapers <- read_fotm("newspaper")       # the newspaper each ad appeared in
+locations  <- read_fotm("location")        # where each newspaper was published
+```
+
+Join them, the same way you joined tables in Exercises 1 and 3. Count the rows before and after. A join that has more rows than the original table is a warning sign.
+
+```{r}
+nrow(ads)
+```
+
+```{r}
+ads_place <- ads %>%
+  left_join(newspapers %>% select(newspaper_id = id, newspaper = name, location_id),
+            by = "newspaper_id") %>%
+  left_join(locations %>% select(location_id = id, city, state),
+            by = "location_id")
+
+nrow(ads_place)   # should be the same as nrow(ads)
+```
+
+------------------------------------------------------------------------
+
+## 3. Check the packaging
+
+> **Peng:** Before opening the wrapped "present," shake the box: how many rows and columns are there? And do they match what you expected? ([Peng, "Check the packaging"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#check-the-packaging))
+
+```{r}
+nrow(ads)
+ncol(ads)
+
+nrow(newspapers)
+n_distinct(newspapers$name)   # how many different newspaper titles?
+```
+
+Titles aren't the whole story: two papers can share a name, and one paper can move. So count the different newspapers by title **and** place of publication:
+
+```{r}
+ads_place %>%
+  distinct(newspaper, city, state) %>%
+  nrow()                               
+```
+
+(@) What did the `distinct()` function do in the chunk above?
+Hint: take a peak at the documentation for the function with `?distinct`.
+
+>
+
+(@) The `newspaper` table has 41,551 rows, but notice many different newspapers (unique pair of title + place) there are. So what is the **unit of analysis** in the `newspaper` table? In other words, what is one row? 
+
+>
+
+(@) Then find a title that appears in two places: did the paper move, are these two different papers, or is it an error? 
+
+::: {.callout-tip}
+## Tip:
+To answer the question, you need two things for each title: **where** it was published, and **when**. Build your chunk in three steps:
+
+1. **One row per title and place, with the evidence.** Start from `ads_place`, group by title and place, and summarize how many ads each one has and when they were published:
+
+```r
+   ads_place %>%
+     group_by(______) %>%
+     summarize(ads   = n(),
+               first = min(________),
+               last  = max(________),
+               .groups = "drop")
+```
+2. **Count places per title.** Pipe that into `add_count(_______)` so that each row shows how many places its title appears in.
+
+3. **Keep only titles with more than one place:** `filter(___ > ___)`.
+
+**How to read the result:**
+
+- **Dates follow one another** (one place stops, the other starts): the paper probably **moved**.
+- **Dates overlap, or are years apart:** probably **two different papers** with the same name.
+- **Same dates in both places, or a single stray ad:** probably a **data-entry error**.
+:::
+
+
+```{r}
+
+```
+Write your findings here:
+
+> 
+
+------------------------------------------------------------------------
+
+## 4. Run `str()`
+
+> **Peng:** `str()` shows the class of every column. Make sure numbers are numbers, dates are dates, and text is text. ([Peng, "Run str()"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#run-str))
+
+```{r}
+str(ads_place)
+```
+
+Every column is text, because `read_fotm()` reads everything as text on purpose. To work with time we need a real date. `year()` (from the lubridate package, part of the tidyverse) pulls out the year:
+
+```{r}
+ads_place <- ads_place %>%
+  mutate(date = as.Date(publication_date),
+         year = year(date))
+
+sum(is.na(ads_place$date))   # how many dates failed to convert?
+```
+
+------------------------------------------------------------------------
+
+## 5. Look at the top and the bottom of your data
+
+> **Peng:** Look at the first and last rows. Problems often hide at the end of a file, and for data over time, check that the first and last dates are what you expect. ([Peng, "Look at the top and the bottom of your data"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#look-at-the-top-and-the-bottom-of-your-data))
+
+Our data are over time, so sort by date first:
+
+```{r}
+ads_place %>%
+  arrange(date) %>%
+  select(date, newspaper, city, state) %>%
+  head()
+
+ads_place %>%
+  arrange(date) %>%
+  select(date, newspaper, city, state) %>%
+  tail()
+```
+
+(@) Discuss with your pair or group: what are the earliest and latest dates? Which one surprises you, and why?
+
+>
+
+------------------------------------------------------------------------
+
+## 6. Check your "n"s
+
+> **Peng:** Count things, and compare the counts with *landmarks*: numbers you know should be true. If you expect 1,000 people and find 20, something's wrong. ([Peng, "Check your 'n's"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#check-your-ns))
+
+A landmark for us: every ad in FOTM is a scan of a newspaper page. If FOTM is a database of *transcribed* ads, nearly every row should have a transcription. Does it? (`{undefined value}` is one of FOTM's ways of saying "nothing here," as you saw in Exercise 3.)
+
+```{r}
+ads_place <- ads_place %>%
+  mutate(has_text = !is.na(transcription) & transcription != "{undefined value}")
+
+ads_place %>% count(has_text)
+```
+
+Plot the ads by decade, colored by whether they've been transcribed. `floor(year / 10) * 10` turns 1823 into 1820:
+
+```{r}
+ads_place %>%
+  mutate(decade = floor(year / 10) * 10) %>%
+  count(decade, has_text) %>%
+  ggplot(aes(x = decade, y = n, fill = has_text)) +
+  geom_col() +
+  labs(title = "FOTM advertisements by decade of publication",
+       x = "Decade", y = "Advertisements", fill = "Transcribed?")
+```
+
+(@) What share of the ads have a transcription? Which decades have the most untranscribed ads? Without the color, what would a reader conclude from the height of the 1810s and 1820s bars?
+
+>
+
+------------------------------------------------------------------------
+
+## 7. Validate with at least one external data source
+
+> **Peng:** Check your data against something *outside* the dataset. Even a single number will do: Peng compares his ozone readings with the national air-quality standard to see if they're the right order of magnitude. ([Peng, "Validate with at least one external data source"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#validate-with-at-least-one-external-data-source))
+
+Two historical landmarks:
+
+- *The Boston News-Letter*, the first continuously published newspaper in British North America, began in April **1704**.
+- The Thirteenth Amendment abolished slavery in the United States in December **1865**.
+
+Your earliest ad should be no earlier than 1704, and runaway-slave ads should stop after 1865. Check the first, then read the ads published after 1865:
+
+```{r}
+ads_place %>% filter(year == min(year)) %>% select(date, newspaper)
+
+after_1865 <- ads_place %>%
+  filter(year > 1865) %>%
+  arrange(date)
+
+after_1865 %>% count(newspaper, state)
+
+after_1865 %>% pull(transcription) %>% cat(sep = "\n\n----------\n\n")
+```
+
+(@) Does the earliest ad agree with the first landmark? For the ads after 1865: who is running away, from whom, and who "bound" them? What do these ads tell you about the end of slavery, and why might FOTM's editors have included them? Is any of them probably a data-entry error?
+
+>
+
+------------------------------------------------------------------------
+
+## 8. Try the easy solution first
+
+> **Peng:** Give the simplest possible answer to your question first, without worrying yet about whether it's right. Then question it. ([Peng, "Try the easy solution first"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#try-the-easy-solution-first))
+
+The easy answer to "In which states were the ads published?": count the ads by state.
+
+```{r}
+ads_by_state <- ads_place %>%
+  count(state, name = "ads", sort = TRUE)
+
+ads_by_state
+
+ggplot(ads_by_state, aes(x = ads, y = reorder(state, ads))) +
+  geom_col() +
+  labs(title = "FOTM advertisements by state of publication",
+       x = "Advertisements", y = NULL)
+```
+
+(@) Which state comes first? Does that match what you know about where slavery was concentrated in the United States?
+
+>
+
+------------------------------------------------------------------------
+
+## 9. Challenge your solution
+
+> **Peng:** The easy answer should never "hold the day." Look for ways to challenge it, especially when it matches what you expected. ([Peng, "Challenge your solution"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#challenge-your-solution))
+
+### Challenge 1: Which newspapers?
+
+A state's count is the sum of its newspapers. Which newspapers make up the top state?
+
+```{r}
+top_state <- ads_by_state$state[1]
+
+ads_place %>%
+  filter(state == top_state) %>%
+  count(newspaper, has_text, sort = TRUE)
+```
+
+### Challenge 2: Count only the ads someone has read
+
+Redo the easy solution, counting only transcribed ads:
+
+```{r}
+ads_place %>%
+  filter(has_text) %>%
+  count(state, name = "transcribed_ads", sort = TRUE)
+```
+
+(@) How much of the top state's lead comes from one newspaper? How many of that paper's ads have been transcribed? Which state comes first when you count only transcribed ads?
+
+>
+
+### Challenge 3: Compare with the enslaved population
+
+A second external source: the number of enslaved people in each slave state in 1860, from the U.S. Census. It's only a rough yardstick (the ads span 160 years, the census is one year), but it shows the order of magnitude we should expect.
+
+```{r}
+census_1860 <- tribble(
+  ~state,  ~state_name,            ~enslaved_1860,
+  "US-AL", "Alabama",               435080,
+  "US-AR", "Arkansas",              111115,
+  "US-DE", "Delaware",                1798,
+  "US-DC", "District of Columbia",    3185,
+  "US-FL", "Florida",                61745,
+  "US-GA", "Georgia",               462198,
+  "US-KY", "Kentucky",              225483,
+  "US-LA", "Louisiana",             331726,
+  "US-MD", "Maryland",               87189,
+  "US-MS", "Mississippi",           436631,
+  "US-MO", "Missouri",              114931,
+  "US-NC", "North Carolina",        331059,
+  "US-SC", "South Carolina",        402407,
+  "US-TN", "Tennessee",             275719,
+  "US-TX", "Texas",                 182566,
+  "US-VA", "Virginia",              490865
+)
+
+census_1860 %>%
+  left_join(ads_by_state, by = "state") %>%
+  mutate(ads = replace_na(ads, 0),                      # no ads at all becomes 0, not NA
+         ads_per_1000_enslaved = round(ads / enslaved_1860 * 1000, 1)) %>%
+  arrange(desc(ads_per_1000_enslaved))
+```
+
+(@) Which states have the most ads per 1,000 enslaved people, and which have none at all? What does that suggest about how FOTM chose (or was able to find) its newspapers?
+
+>
+
+(@) Last challenge, from Exercise 3: the George, Celia, and Sarah ad ran 20 times in the *Charleston Mercury*, and each printing is a separate row in `ads`. How would reprints affect the counts above? How might you find them? (You don't need to write the code.)
+
+>
+
+------------------------------------------------------------------------
+
+## 10. Follow up
+
+> **Peng:** At the end, ask three questions. Do you have the right data? Do you need other data? Do you have the right question? ([Peng, "Follow up questions"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#follow-up-questions))
+
+(@) Answer Peng's three questions for our question ("In which states were the advertisements in FOTM published?"). Then return to the broad question we set aside in step 1, "Where did people escape from slavery?" What would you need to answer it, and what can FOTM honestly tell you about it?
+
+>
+
+(@) Rewrite the question you wrote in step 1, using what you learned in this checklist.
+
+>
+
+------------------------------------------------------------------------
+
+## Save, Commit, Push
+
+The counts you made are small summaries of FOTM, so they can be committed. FOTM's own files stay in `data/FOTM/`.
+
+```{r}
+write_csv(ads_by_state, "output/exercise4/ads_by_state.csv")
+```
+
+Commit this file and `output/exercise4/` with a message like "Exercise 4: EDA checklist on FOTM," then **Push origin**. As always, if anything from `data/FOTM/` shows up in GitHub Desktop's Changes list, stop and ask me.
+
+::: {.callout-tip}
+## Sources
+
+- Roger D. Peng, *Exploratory Data Analysis with R* (Leanpub, 2015–2020), Chapter 4, "Exploratory Data Analysis Checklist," [bookdown.org/rdpeng/exdata](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html). The structure of this exercise and the summarized steps are his.
+- *Freedom on the Move: A Database of Fugitives from American Slavery*, Cornell University, [freedomonthemove.org](https://freedomonthemove.org). Full database download used in this course: September 2026.
+- Enslaved population by state, 1860 U.S. Census, as tabulated in "[Population by Color and Status: U.S. Slave States, 1860](https://terpconnect.umd.edu/~sfmiller/population%20statistics,%201860.htm)."
+:::
