@@ -1,8 +1,8 @@
 ---
 title: "In-Class Exercise 4: An Exploratory Data Analysis Checklist"
 subtitle: "Roger Peng's checklist, applied to Freedom on the Move"
-author: ""
-date: ""
+author: "Aaron Tanglertpaibul"
+date: "7 october 2026"
 format:
   html:
     theme: cosmo
@@ -58,16 +58,19 @@ read_fotm <- function(table) {
 
 > **Peng:** "A sharp question or hypothesis can serve as a dimension reduction tool that can eliminate variables that are not immediately relevant to the question." It's also worth asking early whether you have the right data to answer it. ([Peng, "Formulate your question"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#formulate-your-question))
 
+dont just skim colums, come up with question to reduce scope of dataset
+
 Peng starts from a broad question ("Are air pollution levels higher on the east coast than on the west coast?") and sharpens it until it names one measure and one unit. We'll do the same. A broad question:
 
 > Where did people escape from slavery?
 
-FOTM can't answer that directly: it holds *advertisements*, not escapes. 
+FOTM can't answer that directly: it holds *advertisements*, not escapes. too broad, FOTM database doesnt have right variables 
 
 
-(@) Write your own sharp question about FOTM's advertisements: one that names exactly what you'd count or measure, and for what unit (an ad, a newspaper, a state, a decade...).
+(@) Write your own sharp question about FOTM's advertisements to reduce numner of colums or tables: one that names exactly what you'd count or measure, and for what unit (an ad, a newspaper, a state, a decade...).
 
->
+>which newspaper publications were the most prolific in running the advertizments and when?
+publication date, count of articles, newspaper titles are the columns 
 
 Save your question for a possible future investigation. For the purpose of learning Peng's checklist, we'll pursue a question this database can actually answer:
 
@@ -117,24 +120,34 @@ nrow(newspapers)
 n_distinct(newspapers$name)   # how many different newspaper titles?
 ```
 
-Titles aren't the whole story: two papers can share a name, and one paper can move. So count the different newspapers by title **and** place of publication:
+Titles aren't the whole story: two papers can share a name, and one paper can move. So count the different newspapers by title **and** place of publication: more ads than newspapers, 
 
 ```{r}
-ads_place %>%
-  distinct(newspaper, city, state) %>%
-  nrow()                               
+TEST <- ads_place %>%
+  distinct(newspaper, city, state) "%>%"
 ```
-
+  nrow()                             
+```
+```
 (@) What did the `distinct()` function do in the chunk above?
 Hint: take a peak at the documentation for the function with `?distinct`.
 
->
+>keep only discticnt/unique rows and keep newspaper, city, and state
 
+when running test, value 261L popped up, meaning 261 obs of 3 variables
+
+> ado 1 scan, runaway name, location newspaper (id NY, usa and Id "new york")same title can get attactech to different location and get different id 
+
+```{r}
+test <- ads_place
+```
 (@) The `newspaper` table has 41,551 rows, but notice many different newspapers (unique pair of title + place) there are. So what is the **unit of analysis** in the `newspaper` table? In other words, what is one row? 
 
->
+>one row is made up of columns id,name "of newspaper" , location_id, visible. in the name colunm
 
 (@) Then find a title that appears in two places: did the paper move, are these two different papers, or is it an error? 
+
+>the title also appears in ads_place
 
 ::: {.callout-tip}
 ## Tip:
@@ -143,12 +156,12 @@ To answer the question, you need two things for each title: **where** it was pub
 1. **One row per title and place, with the evidence.** Start from `ads_place`, group by title and place, and summarize how many ads each one has and when they were published:
 
 ```r
-   ads_place %>%
+   ads_place %>% put new 
      group_by(______) %>%
-     summarize(ads   = n(),
-               first = min(________),
+     summarize(ads   = n(), ads is name of new column as total of ads, n is function that says count
+               first = min(________), since publication_date is formated as text, can use function of min and max for test strings
                last  = max(________),
-               .groups = "drop")
+               .groups = "drop") %>% add_count(newspaper) %>% add_filter(n>1) 
 ```
 2. **Count places per title.** Pipe that into `add_count(_______)` so that each row shows how many places its title appears in.
 
@@ -163,11 +176,16 @@ To answer the question, you need two things for each title: **where** it was pub
 
 
 ```{r}
-
+ads_place_count <- ads_place %>%
+     group_by(newspaper, city, state) %>%
+     summarize(ads   = n(),
+               first = min(publication_date),
+               last  = max(publication_date),
+               .groups = "drop") %>% add_count (newspaper) %>% filter(n>1) 
 ```
 Write your findings here:
 
-> 
+> daily national intelligencer is by far the most prolific advertiser for runaway slaves, and there are only 20 uniques states that the newspapers are from with north carolina having the most newspaper publications
 
 ------------------------------------------------------------------------
 
@@ -211,7 +229,7 @@ ads_place %>%
 
 (@) Discuss with your pair or group: what are the earliest and latest dates? Which one surprises you, and why?
 
->
+>1704 to 1894, in north carolina, the newspapers that show up after 1865 suprise me as it shows how resistance to change of the emancipation proclamation enforcement. 
 
 ------------------------------------------------------------------------
 
