@@ -1,0 +1,227 @@
+---
+title: "In-Class Exercise 5: Distant Reading *The American City*"
+subtitle: "Text analysis in Voyant Tools"
+author: ""
+date: ""
+format:
+  html:
+    theme: cosmo
+    highlight-style: dracula
+    code-overflow: wrap
+    css: assets/styles.css
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+---
+
+::: {.callout-note}
+## What is this exercise?
+
+Today's class introduced **distant reading**: studying patterns across many texts instead of reading a few closely. This exercise puts each idea we just talked about into practice. You'll use [Voyant Tools](https://voyant-tools.org), a free web application for text analysis. Voyant does the tokenizing, cleaning, and counting for you, which makes it a good place to see the **choices** behind those steps. On Wednesday we'll go back to R for topic modeling, using the same corpus.
+
+There is no coding involved in this exercise. Start in class (pairs or groups of 3), finish at home, and commit your own work. Write your answers in this file after each `>`.
+:::
+
+**The corpus:** 24 monthly issues of *The American City* (January 1915 to December 1916), a magazine for mayors, engineers, and reformers about running American cities: streets, water, fire, parks, health, and planning. The issues were scanned and turned into text with OCR (optical character recognition), so expect errors.
+
+## Setup
+
+1. Find `data/AmericanCity_1915-1916.zip` in your Worksheets folder. **Don't unzip it.** Voyant accepts the zip as it is.
+2. Go to [voyant-tools.org](https://voyant-tools.org), click **Upload**, and choose the zip file. Loading takes a minute.
+3. Voyant opens its default screen with five tools. Each panel has tabs at the top for related tools:
+
+| Panel | Opens with | Other tabs |
+|-------|------------|------------|
+| Top left | **Cirrus** (word cloud) | Terms, Links |
+| Top middle | **Reader** (the text itself) | TermsBerry |
+| Top right | **Trends** (words over time) | Document Terms |
+| Bottom left | **Summary** | Documents, Phrases |
+| Bottom right | **Contexts** (keywords in context) | Bubblelines, Collocations |
+
+If you can't find any of the tools mentioned below, hover over the grey header of any panel, click the small **window icon**, and choose the tool from the menu.
+
+4. **Save your corpus.** Click the **Export** icon (a diskette) in the blue bar at the very top and copy the link. Then select **an HTML snippet for embedding this view in another web page**. That URL reopens this exact corpus later, so you don't have to upload it again. Copy the URL that starts after **src =**. Paste it here:
+
+> 
+
+::: {.callout-warning}
+## Keep in mind:
+
+- Your corpus goes to Voyant's public server, and anyone with the link can open it. That's fine for a magazine from 1915–1916, but never upload private or sensitive material (the Middletown oral histories, for example).
+- Voyant keeps a corpus as long as someone opens it at least once a month.
+- We're using Voyant as an introductory tool to text analysis.
+:::
+
+------------------------------------------------------------------------
+
+## Part 1: Corpus and document
+
+As we've seen, a *corpus* is a collection of texts assembled for analysis. A *document* is a single unit within it, and we must decide what counts as a document.
+
+Open the **Documents** tab (bottom left). 
+
+(@) What counts as a document in this corpus, and how many are there? Who made this decision?
+
+>
+
+Now open **Summary** (same panel).
+
+(@) How many words and how many unique words does the corpus have? Which document is the longest and which the shortest?
+
+> 
+
+--------------------------------------------------------------------------------
+
+## Part 2: The bag of words
+
+The *bag of words* model counts how often each word appears and ignores the order of words. Word clouds and frequency lists are bags of words.
+
+Look at **Cirrus**, then switch to the **Terms** tab (same panel) to see the same words as a table with counts. Voyant has already removed common English stopwords (*the*, *of*, *and*...).
+
+(@) What are the five most frequent words? What does that tell you about the contents of the magazine?
+
+>
+
+--------------------------------------------------------------------------------
+
+## Part 3: Cleaning the tokens
+
+Before counting, we need to decide how to standardize the text: *lowercasing*, removing punctuation, removing *stopwords*, *stemming* or *lemmatizing*, correcting OCR. Each choice changes what the computer sees and what results you get.
+
+### 3a. Tokens that aren't words
+
+Scroll down the **Terms** table. Some "words" aren't words at all.
+
+(@) List at least four tokens in the top 50 that aren't real words, or don't mean what they seem to mean. For one of them, type it into the search box in **Contexts** (bottom right) and read a few lines. Where does it come from?
+
+>
+
+(@) *American* and *york* are near the top of the list. Use **Contexts** to find out why. Are they telling you something about the magazine's content?
+
+>
+
+### 3b. Edit the stopword list
+
+Now make your own cleaning decisions:
+
+1. In the **Terms** (or Cirrus) panel, click the **options icon** in the panel's header ("Define options for this tool").
+2. Next to **Stopwords**, keep the selected list and click **Edit List**.
+3. Add the junk tokens you found, one per line, and anything else you think should go. Click **Save**.
+4. Make sure **apply globally** is checked, so every tool uses your list, and confirm.
+
+(@) Which words did you add to the stopword list, and why? Did you remove anything that might matter for a historian?
+
+>
+
+### 3c. Lowercasing and word forms
+
+Voyant lowercases every word automatically, so *City* and *city* are counted together. It does not stem or lemmatize: *city* and *cities*, or *playground* and *playgrounds*, are counted separately. You can combine word forms when you search instead. Try these one at a time in the **Terms** search box:
+
+- `playground` (the exact word only)
+- `playground*` (every word that starts with *playground*, combined into one count)
+- `^playground*` (the same words, but listed separately)
+- `city|cities` (two words counted as one)
+
+(@) How do the counts change across these four searches? When would combining word forms be useful for a historian, and when would it hide something? (Remember the slide's example: stemming *nations* and *national* to *nation*.)
+
+>
+
+------------------------------------------------------------------------
+
+## Part 4: Beyond single words
+
+Tokenization involves choices, like whether *New York* is one token or two. *N-grams* (sequences of two, three, or more words) keep some word order back.
+
+Open the **Phrases** tab (bottom left). It lists repeated sequences of words, longest first. Click the **Count** header to sort by frequency instead, and drag the length slider so it shows phrases of 2 to 3 words.
+
+(@) Find three phrases of two or three words that tell you more than their single words would on their own (for example, a phrase whose words mean something different when separated). What do they reveal about the magazine's concerns?
+
+>
+
+
+(@) Now find two phrases of two or three words that are, in fact, parts of a singular word that were mistakenly separated.
+
+> 
+
+------------------------------------------------------------------------
+
+## Part 5: From distant to close reading
+
+Distant reading doesn't replace close reading. *Patterns at scale* point to documents worth reading closely.
+
+In **Trends**, type `jitney` into the search box and press Enter. The chart shows how often the word appears in each issue.
+
+Trends uses *relative frequency* by default: the word's count divided by the length of the issue, so long and short issues can be compared fairly.
+
+(@) In which issue does `jitney` peak? Click on the peak, then read some of the passages in **Contexts** and **Reader**. What was a jitney, and why were city officials writing about it at that moment? (A quick search outside Voyant is fine; cite your source.)
+
+>
+
+Now compare a few words over time. Type them into the **Trends** search box separated by commas, for example `preparedness, war, playground, motor`.
+
+(@) Pick two words whose trends differ in an interesting way. Describe what the chart shows, then read a few contexts for each. What historical developments of 1915–1916 might explain the pattern? What would you need to check before making that claim?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 6: The document-term matrix and tf-idf
+
+A *document-term matrix* has one row per document and one column per word, with counts in the cells. *TF-IDF* gives more weight to words that are frequent in one document but rare across the corpus.
+
+Open the **Document Terms** tab (top right). Each row is one word in one issue: together, these rows are the document-term matrix in long form. Click the small arrow on any column header, choose **Columns**, and check **Significance**. That's Voyant's tf-idf score. Click the **Significance** header to sort.
+
+::: {.callout-note}
+## Why does every score say 0.000?
+
+Voyant calculates tf-idf as (the word's count in the issue ÷ the issue's length) × log₁₀(24 ÷ the number of issues that contain the word). Because the first part is a small fraction, almost every score is below 0.0005, and the table rounds it to 0.000. Voyant still sorts by the full value, so the order is right even when the numbers look identical. Words found in all 24 issues, like *city* or *water*, really do score zero: log₁₀(24 ÷ 24) = 0.
+:::
+
+Now go back to **Summary** (bottom left) and scroll to *Distinctive words*: the five words with the highest tf-idf in each issue. Click **Next** to see more issues.
+
+(@) Find two issues whose distinctive words point to something historically meaningful (an event, a debate, a new technology). What are they, and what do they suggest?
+
+>
+
+(@) Now find distinctive words that are artifacts of how the corpus was made rather than of what the magazine said. Look for things like Roman numerals, misspelled month names, or a word that only appears in some issues. Use **Contexts** to find where one of them comes from. What does it tell you about how these issues were digitized, and about trusting tf-idf?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 7: Collocations
+
+Collocations are words that appear near each other more often than expected, a *counting* method.
+
+Open the **Collocates** tool (bottom right panel). Type a word you're curious about into the search box, for example `women`, `playground`, or `garbage`. Voyant lists the words that appear within 5 words of it. Check at least one collocate in **Contexts**.
+
+(@) Which word did you choose, and what are its most frequent collocates? What do they suggest about how *The American City* talked about that subject?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 8: Reflect
+
+Text analysis methods range from *rule-based* (humans give the rules and word lists) to *counting* to *supervised* and *unsupervised machine learning*.
+
+(@) Sort what you did today into the slides' categories: which steps were rule-based, and which were counting? Did Voyant *learn* anything?
+
+>
+
+(@) We've talked about how every step of the conversion from text to numbers involves choices about what to keep and what to discard. In one paragraph, describe three choices that were made today (by you, by Voyant, or by whoever digitized these issues) and how each one changed what you could see in *The American City*.
+
+>
+
+------------------------------------------------------------------------
+
+## Save, Commit, Push
+
+Make sure your corpus link is pasted in the Setup section. Render this file, then commit it with a message like "Exercise 5: distant reading in Voyant," and **Push origin**.
+
+::: {.callout-tip}
+## Sources
+
+- *The American City*, vols. 12–15 (New York: The Civic Press, 1915–1916), OCR text from digitized copies.
+- Stéfan Sinclair and Geoffrey Rockwell, [Voyant Tools](https://voyant-tools.org) (2016–), and the [Voyant Tools documentation](https://voyant-tools.org/docs/).
+:::

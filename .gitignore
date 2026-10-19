@@ -54,28 +54,9 @@ __MACOSX/
 # NHGIS extracts -- fetched per student via the IPUMS API (redistribution not permitted)
 /data/nhgis*.zip
 
-# Corpora that worksheets download at runtime -- these are NOT committed.
-# Note: the data/ folder IS committed; it holds the CSVs that worksheets 5, 6, 8, 9 and 10 read from disk.
-/sotu_files/
-/txt/
-/TheAmericanCity/
-/MindAndBody.zip
-/AmCity.zip
+# Note: the rest of data/ IS committed; it holds the public files that the
+# exercises read from disk (citydir-1925-sample.csv, bellevue_for_R.csv,
+# AmericanCity_1915-1916.zip). Only data/FOTM/ (above) stays local.
 
-# ---------------------------------------------------------------------------
-# PROGRESSIVE RELEASE: Note to self
-# Worksheets listed here stay local and are not pushed to GitHub.
-# To release one, delete its line, then commit and push:
-#     git add 2-DataStructures.qmd
-#     git commit -m "Release worksheet 2"
-#     git push
-# Students get it in GitHub Desktop: Fetch origin, then
-# Branch -> Update from upstream/main, then Push origin.
-# ---------------------------------------------------------------------------
-4-BasicDataManipulation.qmd
-5-AdvancedDataManipulation.qmd
-6-DataVisualization.qmd
-7-ExploratoryDataAnalysis.qmd
-8-TextAnalysis.qmd
-9-TopicModeling.qmd
-10-Mapping.qmd
+# Answer keys -- instructor only, never pushed
+*-KEY.*
