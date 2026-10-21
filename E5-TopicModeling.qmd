@@ -1,0 +1,428 @@
+---
+title: "In-Class Exercise 5, Part 2: Topic Modeling *The American City*"
+subtitle: "A first topic model in R"
+author: ""
+date: ""
+format:
+  html:
+    theme: cosmo
+    highlight-style: dracula
+    code-overflow: wrap
+    css: assets/styles.css
+    df-print: paged
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+---
+
+::: {.callout-note}
+## What is this exercise?
+
+This is the second half of Exercise 5. On Monday you explored *The American City* in Voyant, where every step was either **rule-based** (stopword lists, search patterns) or **counting** (frequencies, tf-idf, collocates), and Voyant didn't learn anything. Today you'll use the same 24 issues to build a **topic model**, your first example of **unsupervised machine learning**: without any set instructions of what to look for, the computer finds groups of words that tend to appear together, and you decide if they mean anything.
+
+You'll also make in code the decisions Voyant made for you on Monday: what counts as a document, which words to drop, how many topics to ask for. Write each one down as you go. They come back in the last part.
+
+As before, you're graded on your documented effort, not on mastery. Start in class (pairs or groups of 3 are welcome), finish at home, and commit your own work. Each question (Q1, Q2, ...) is a prompt to discuss with your pair or group. Jotting notes after each `>` is optional, but it will help you later in the semester.
+:::
+
+::: {.callout-tip}
+## How a topic model works, in one paragraph
+
+Imagine cutting all 24 issues into about 1,500 short pieces and handing them to someone who can't read English but is very good at counting. They'd notice that some words keep turning up in the same pieces: *concrete*, *asphalt*, and *pavement* together; *school*, *children*, and *health* together. A topic model does this with probabilities. It sorts the vocabulary into a number of word groups that you choose (the **topics**), and it describes each piece as a mix of those groups: say, 70% "paving" and 30% "costs." The model never learns what any word means. Naming the groups, and checking whether they make sense, is your job.
+:::
+
+## Setup
+
+`tidytext` and `topicmodels` were installed with Worksheet 2's setup chunk. If R says it can't find one of them, run `install.packages("topicmodels")` (or `"tidytext"`) in your **console**, and answer `n` if it asks about installing from sources.
+
+```{r}
+#| message: false
+# Chunk 1
+library(tidyverse)
+library(tidytext)      # tokenizing, stopwords, and tidy() for models
+library(topicmodels)   # LDA()
+
+dir.create("output/exercise5", recursive = TRUE, showWarnings = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Part 1: From a zip file to a table
+
+Voyant read the zip file for you. In R, we unzip it ourselves. `unzip()` puts the 24 text files in a temporary folder outside your repository, so they don't show up in GitHub Desktop, and returns their paths:
+
+```{r}
+# Chunk 2
+files <- unzip("data/AmericanCity_1915-1916.zip", exdir = tempdir())
+basename(files)
+```
+
+Now read each file into one row of a table. The file names follow the pattern `1915-01_January.txt`, so the first seven characters give us each issue's date:
+
+```{r}
+# Chunk 3
+issues <- tibble(file = files) %>%
+  mutate(issue = tools::file_path_sans_ext(basename(file)),   # "1915-01_January"
+         date  = ym(str_sub(issue, 1, 7)),                      # "1915-01" becomes a date
+         text  = map_chr(file, read_file)) %>%                  # read each file's full text
+  select(issue, date, text)
+
+issues
+```
+
+`unnest_tokens()` splits the text into words, one row per word. Like Voyant, it **lowercases** everything and **drops punctuation**:
+
+```{r}
+# Chunk 4
+tokens <- issues %>%
+  select(issue, date, text) %>%
+  unnest_tokens(word, text)
+
+nrow(tokens)
+```
+
+**Q1. Discuss with your pair or group:** How many words does R count in the corpus? Compare that with the total Voyant gave you in Part 1 of `E5-TextAnalysis.qmd`. If the numbers differ, why might two programs count the "same" words differently?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 2: What counts as a document?
+
+A topic model treats each **document** as a mixture of topics. On Monday a document was a whole monthly issue: about 60,000 words of streets, sewers, parks, advertisements, and conference reports. With only 24 such documents, every one would be a blend of everything.
+
+Ideally, a document would be one article. But the OCR text has no reliable article boundaries, so we'll cut each issue into **chunks of 1,000 words** instead. `%/%` is integer division: words 1–1,000 of an issue become chunk 0, words 1,001–2,000 chunk 1, and so on.
+
+```{r}
+# Chunk 5
+tokens <- tokens %>%
+  group_by(issue) %>%
+  mutate(chunk = (row_number() - 1) %/% 1000) %>%
+  ungroup() %>%
+  mutate(doc_id = paste(issue, chunk, sep = "_"))   # "1915-01_January_0", "1915-01_January_1", ...
+
+# One row per chunk, so we can look up its issue and date later
+chunk_info <- tokens %>% distinct(doc_id, issue, date)
+chunk_info
+```
+
+**Q2. Discuss with your pair or group:** How many documents do we have now? What do we gain from chunking, and what might we lose?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 3: Cleaning the tokens
+
+Like we did on Monday with Voyant's stopword list, we need to make decisions about cleaning the tokens. Here, we may remove:
+
+- the `tidytext` list of common English stopwords;
+- any token that contains a digit (page numbers, prices, dates);
+- tokens shorter than 3 letters, which in OCR text are mostly fragments;
+- a custom list of our own.
+
+```{r}
+# Chunk 6
+my_stopwords <- c("ing", "tion", "con", "ment")   # word fragments from line breaks; add your own
+
+words <- tokens %>%
+  anti_join(stop_words, by = "word") %>%
+  filter(!str_detect(word, "\\d"),
+         str_length(word) >= 3,
+         !word %in% my_stopwords)
+
+words %>% count(word, sort = TRUE)
+```
+
+**Q3. Discuss with your pair or group:** Look at the 50 most frequent words above. Which junk tokens from Voyant (Part 3 of `E5-TextAnalysis.qmd`) and which others you see now would you add to `my_stopwords`? Is there a reason you can think of to remove any real words from this corpus? Which ones and why?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 4: The document-term matrix
+
+`LDA()` needs a **document-term matrix**: one row per document, one column per word, counts in the cells. On Monday, Voyant's Document Terms tool showed you the same information in long form (one row per word per issue). `cast_dtm()` turns our long table into that wide matrix.
+
+We also drop words that appear fewer than 25 times in the whole corpus. Rare words can't form patterns across documents, many of them are OCR errors, and leaving them out makes the model much faster.
+
+```{r}
+# Chunk 7
+dtm <- words %>%
+  add_count(word, name = "total") %>%   # how often each word appears in the corpus
+  filter(total >= 25) %>%
+  count(doc_id, word) %>%
+  cast_dtm(doc_id, word, n)
+
+dtm
+```
+
+**Q4. Discuss with your pair or group:** How many documents and how many different words (terms) are in the matrix? The output says most cells are empty (that's what **sparsity** means). Why would most words be missing from most 1,000-word chunks?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 5: Fit the model
+
+The method we'll use is called **LDA** (Latent Dirichlet Allocation; you only need the abbreviation). Two settings come from you:
+
+- `k`, the number of topics. There's no correct number. Too few and different subjects get lumped together; too many and topics split into near-duplicates. We'll start with 10.
+- the **seed**. LDA starts from a random guess and improves it step by step. Setting the seed makes that random start the same every time, so you (and I) get the same topics whenever you run or render the file.
+
+This chunk takes **one to two minutes**. That's normal: the algorithm is going through every word in about 1,500 documents many times over.
+
+```{r}
+# Chunk 8
+lda <- LDA(dtm, k = 10, control = list(seed = 446))
+```
+
+(Topic models have one more setting, **alpha**, which controls how many topics each document tends to mix. `LDA()` estimates it for you, so we'll leave it alone.)
+
+------------------------------------------------------------------------
+
+## Part 6: What are the topics? (beta)
+
+For each topic, the model gives every word a score called **beta**: how likely that word is to come from that topic. The words with the highest beta are the topic's most typical words:
+
+```{r}
+#| fig-height: 9
+# Chunk 9
+top_terms <- tidy(lda, matrix = "beta") %>%
+  group_by(topic) %>%
+  slice_max(beta, n = 10, with_ties = FALSE) %>%
+  ungroup()
+
+top_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot(aes(x = beta, y = term, fill = factor(topic))) +
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ topic, scales = "free_y", ncol = 3) +
+  labs(title = "Top 10 words in each topic, The American City (1915-1916)",
+       x = "How typical the word is of the topic (beta)", y = NULL)
+```
+
+**Q5. Discuss with your pair or group, then fill in the table below:** give each topic a short label based on its words alone. Mark with an asterisk any topic that seems to come from *how the magazine was made or digitized* (advertising pages, OCR errors) rather than from what its articles were about. Leave a label blank if you really can't tell.
+
+```{r}
+# Chunk 10
+topic_labels <- c(
+  "1" = "",
+  "2" = "",
+  "3" = "",
+  "4" = "",
+  "5" = "",
+  "6" = "",
+  "7" = "",
+  "8" = "",
+  "9" = "",
+  "10" = ""
+)
+```
+
+Add the labels to the topic plots and save the visualization in your `output/exercise5/` folder.
+```{r}
+# Chunk 11
+top_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot(aes(x = beta, y = term, fill = factor(topic))) +
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ topic, scales = "free_y", ncol = 3, labeller = as_labeller(topic_labels)) +
+  labs(title = "Top 10 words in each topic, The American City (1915-1916)",
+       x = "How typical the word is of the topic (beta)", y = NULL)
+
+# save this viz to your output/exercise5/ folder
+ggsave("output/exercise5/ten-topics.png", width = 10, height = 10)
+```
+------------------------------------------------------------------------
+
+## Part 7: Read the documents (gamma)
+
+As Brett and Schmidt both insist, a list of words is not a topic. You can only interpret a topic by reading the documents it comes from.
+
+The model also gives every chunk a set of shares called **gamma**: how much of that chunk it assigns to each topic. A chunk might be 0.8 topic 3 and 0.2 topic 7, for example. Gamma is how we find the chunks worth reading.
+
+```{r}
+# Chunk 12
+doc_topics <- tidy(lda, matrix = "gamma")
+doc_topics
+```
+
+This function prints the first 300 words of a chunk, so you can read it. (The text is lowercased and has no punctuation, because it comes from our tokens.)
+
+```{r}
+# Chunk 13
+show_chunk <- function(id, n_words = 300) {
+  tokens %>%
+    filter(doc_id == id) %>%
+    head(n_words) %>%
+    pull(word) %>%
+    paste(collapse = " ") %>%
+    str_wrap(width = 80) %>%
+    cat()
+}
+```
+
+This chunk finds the three chunks with the highest share of one topic and prints the first of them. Change `my_topic`, and change `[1]` to `[2]` or `[3]` to read the others:
+
+```{r}
+# Chunk 14
+my_topic <- 1   # change this
+
+top_chunks <- doc_topics %>%
+  filter(topic == my_topic) %>%
+  slice_max(gamma, n = 3)
+top_chunks
+
+show_chunk(top_chunks$document[1])
+```
+
+Some passages use the racial and ethnic language of 1915. As in Exercises 3 and 4, we read it as historical evidence.
+
+**Q6. Discuss with your pair or group:** Pick **two** topics and read their top three chunks. Did reading confirm your label from Part 6, or change it? Update `topic_labels` above if it changed.
+
+>
+
+------------------------------------------------------------------------
+
+## Part 8: Topics over time
+
+Because every chunk belongs to an issue, we can average each topic's share across the chunks of each issue and follow it month by month, as you followed single words in Voyant's Trends:
+
+```{r}
+#| fig-height: 6
+# Chunk 15
+topic_by_issue <- doc_topics %>%
+  left_join(chunk_info, by = c("document" = "doc_id")) %>%
+  group_by(date, topic) %>%
+  summarize(share = mean(gamma), .groups = "drop")
+
+ggplot(topic_by_issue, aes(x = date, y = share, colour = factor(topic))) +
+  geom_line() +
+  geom_point(size = 0.8) +
+  facet_wrap(~ topic, ncol = 5) +
+  scale_x_date(breaks = ymd(c("1915-01-01", "1916-01-01")), date_labels = "%Y") +
+  labs(title = "Share of each topic by issue, The American City (1915-1916)",
+       x = NULL, y = "Average share of the issue's chunks (gamma)")
+```
+
+```{r}
+# Chunk 16
+# save this viz to your output/exercise5/ folder
+ggsave("output/exercise5/topics_over_time.png", width = 10, height = 5)
+```
+
+**Q7. Discuss with your pair or group:** Pick one topic whose share rises or falls sharply. When does it change? Before you explain it with history, ask whether it's the **magazine** that changed or the **scans**. In Voyant (or with `show_chunk()`), look at the issues where the topic is high and where it's low. Hint: remember the watermark from Part 6 on Monday, and try the word `advertisers` in Trends.
+``` {r}
+#| message: false
+
+```
+>
+
+### Going further (optional, at home)
+
+Schmidt warns that a topic's top words don't always rise and fall together. A topic's line can look like one trend when really one word is doing all the work. This chunk plots how often the top five words of one topic appear in each issue. Change `my_topic` to a topic you've labeled:
+
+```{r}
+# Chunk 17
+my_topic <- 5   # change this
+
+my_words <- top_terms %>%
+  filter(topic == my_topic) %>%
+  slice_max(beta, n = 5) %>%
+  pull(term)
+
+issue_length <- words %>% count(date, name = "issue_words")
+
+words %>%
+  filter(word %in% my_words) %>%
+  count(date, word) %>%
+  left_join(issue_length, by = "date") %>%
+  mutate(per_10k = n / issue_words * 10000) %>%
+  ggplot(aes(x = date, y = per_10k, color = word)) +
+  geom_line() +
+  labs(title = paste("Top five words of topic", my_topic, "by issue"),
+       x = NULL, y = "Uses per 10,000 words", color = NULL)
+```
+
+**Q8 (optional). Discuss with your pair or group, or think it through at home:** Do the five words rise and fall together, or does one word drive the topic's trend? What does that tell you about how much to trust the topic's line in the chart above?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 9: How many topics? (at home)
+
+Run this chunk to fit a model with only 5 topics and chart its top words. Then copy the chunk below itself, change `lda_5` to `lda_20` and both `5`s to `20`, and run it again. (Each takes one to two minutes; `k = 20` is slower.) Topic numbers don't carry over between models: topic 3 with `k = 5` has nothing to do with topic 3 with `k = 10`.
+
+```{r}
+#| fig-height: 6
+# Chunk 18
+lda_5 <- LDA(dtm, k = 5, control = list(seed = 446))
+
+tidy(lda_5, matrix = "beta") %>%
+  group_by(topic) %>%
+  slice_max(beta, n = 10, with_ties = FALSE) %>%
+  ungroup() %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot(aes(x = beta, y = term, fill = factor(topic))) +
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ topic, scales = "free_y", ncol = 3) +
+  labs(title = "Top 10 words in each topic (k = 5)", x = "beta", y = NULL)
+```
+
+**Q9. Discuss with your pair or group, or think it through at home:** What happens to your labeled topics when `k` is smaller or larger? Do some merge or split? Which `k` gives you topics you could actually **defend** by pointing to passages? This is a judgment call, not a correct answer.
+
+>
+
+------------------------------------------------------------------------
+
+## Part 10: Reflect
+
+**Q10. Discuss with your pair or group, or think it through at home:** On Monday you sorted Voyant's steps into rule-based and counting, and decided Voyant didn't learn anything. Did the topic model *learn* something today? What did it learn, and what did it still need from you?
+
+>
+
+**Q11. Discuss with your pair or group, or think it through at home:** Make a short decision log: at least **four** decisions made today (what counts as a document, which words were removed, dropping words used fewer than 25 times, the number of topics...). For each, one sentence on what it might hide or distort. Jotting this one down is worth it: you'll reuse this kind of log in your Method Selection & Revised Question assignment.
+
+>
+
+------------------------------------------------------------------------
+
+## Save, Commit, Push
+
+Save your labels and the topic chart. They're small tables and a figure, so they go in `output/exercise5/` and get committed.
+
+```{r}
+# Chunk 19
+topic_labels_df <- (as.data.frame(topic_labels)) %>% rownames_to_column(var = "topic") %>% mutate(topic = as.integer(topic)) %>% rename(label = topic_labels)
+
+top_terms %>%
+  left_join(topic_labels_df, by = "topic") %>%
+  write_csv("output/exercise5/topics_k10.csv")
+
+ggplot(topic_by_issue, aes(x = date, y = share)) +
+  geom_line() +
+  facet_wrap(~ topic, ncol = 5) +
+  scale_x_date(breaks = ymd(c("1915-01-01", "1916-01-01")), date_labels = "%Y") +
+  labs(title = "Share of each topic by issue, The American City (1915-1916)",
+       x = NULL, y = "Average share (gamma)")
+
+ggsave("output/exercise5/topics_over_time.png", width = 10, height = 5)
+```
+
+Render this file. Rendering fits the model again, so it takes a couple of minutes (longer if you kept the `k = 5` and `k = 20` models in Part 9). Then commit this file, the `.html`, and `output/exercise5/` with a message like "Exercise 5, part 2: topic modeling," and **Push origin**.
+
+::: {.callout-tip}
+## Sources
+
+- *The American City*, vols. 12–15 (New York: The Civic Press, 1915–1916), OCR text from digitized copies.
+- Megan R. Brett, "Topic Modeling: A Basic Introduction," *Journal of Digital Humanities* 2, no. 1 (2012).
+- Benjamin M. Schmidt, "Words Alone: Dismantling Topic Models in the Humanities," *Journal of Digital Humanities* 2, no. 1 (2012).
+- Julia Silge and David Robinson, *[Text Mining with R](https://www.tidytextmining.com/)*, chapter 6, "Topic Modeling."
+- Bettina Grün and Kurt Hornik, "topicmodels: An R Package for Fitting Topic Models," *Journal of Statistical Software* 40, no. 13 (2011).
+- Parts of this exercise adapt the text analysis and topic modeling worksheets from the original HIST 446 worksheets repository, created by Amanda Regan.
+:::
