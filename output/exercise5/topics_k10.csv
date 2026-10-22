@@ -1,0 +1,101 @@
+topic,term,beta,label
+1,secretary,0.014543718372655903,Government and organization
+1,association,0.012100382272459218,Government and organization
+1,municipal,0.011703805805696929,Government and organization
+1,public,0.00979636947725254,Government and organization
+1,annual,0.008779865668546997,Government and organization
+1,national,0.008692724394955413,Government and organization
+1,street,0.00804485650768064,Government and organization
+1,cents,0.007125744231278178,Government and organization
+1,health,0.007068885235944443,Government and organization
+1,planning,0.006438931814995304,Government and organization
+2,fire,0.02464852762421328,Fire safty infrastructure
+2,street,0.010791207986083792,Fire safty infrastructure
+2,lighting,0.01001421056484666,Fire safty infrastructure
+2,hose,0.00837306921352789,Fire safty infrastructure
+2,motor,0.008267335231974406,Fire safty infrastructure
+2,service,0.00804211762959993,Fire safty infrastructure
+2,truck,0.00801763568898869,Fire safty infrastructure
+2,apparatus,0.00800717527336146,Fire safty infrastructure
+2,equipment,0.00712904483696042,Fire safty infrastructure
+2,lamps,0.006930659958273454,Fire safty infrastructure
+3,concrete,0.014576929542498415,Paving
+3,pavement,0.013497741164526874,Paving
+3,feet,0.011829928380926986,Paving
+3,surface,0.010688066919614048,Paving
+3,road,0.010369330298214527,Paving
+3,street,0.009776062042189051,Paving
+3,sand,0.007644473165640577,Paving
+3,inches,0.006877036864268021,Paving
+3,paving,0.0067682087831049745,Paving
+3,asphalt,0.006708914526782262,Paving
+4,street,0.012040231943038854,Street property cost
+4,land,0.009517836503758367,Street property cost
+4,property,0.008158915224914711,Street property cost
+4,plan,0.007680563969055859,Street property cost
+4,building,0.007611038959994743,Street property cost
+4,streets,0.007534821304811528,Street property cost
+4,public,0.006864028265000693,Street property cost
+4,cost,0.006642230819911997,Street property cost
+4,park,0.006483174378848689,Street property cost
+4,feet,0.006430090878047165,Street property cost
+5,company,0.01518588762991901,Road ads
+5,road,0.012150076812102758,Road ads
+5,writing,0.010994222378905145,Road ads
+5,advertisers,0.010870150346078791,Road ads
+5,mention,0.010841742803475541,Road ads
+5,ohio,0.009817111947960698,Road ads
+5,street,0.009811856514849962,Road ads
+5,write,0.008901151834231532,Road ads
+5,iron,0.007315270364841659,Road ads
+5,brick,0.006873516463482809,Road ads
+6,commerce,0.011673530334458506,Civic commerce
+6,chamber,0.011420331023270914,Civic commerce
+6,club,0.00832794318469362,Civic commerce
+6,county,0.008006645854448548,Civic commerce
+6,civic,0.007866871922005761,Civic commerce
+6,community,0.007804233879179292,Civic commerce
+6,committee,0.007455085463403867,Civic commerce
+6,people,0.006504656065672287,Civic commerce
+6,commercial,0.006495985388717279,Civic commerce
+6,business,0.0064640323412115406,Civic commerce
+7,school,0.01962954840570664,School fire safty
+7,children,0.01097522076725524,School fire safty
+7,fire,0.010276154074068112,School fire safty
+7,public,0.008533116687512693,School fire safty
+7,schools,0.008389878198315154,School fire safty
+7,day,0.00806542460863014,School fire safty
+7,department,0.006482704377929545,School fire safty
+7,safety,0.005709359846396292,School fire safty
+7,time,0.005478613152552901,School fire safty
+7,system,0.005175604744832947,School fire safty
+8,public,0.019506559578046128,Local government
+8,municipal,0.017094074225279067,Local government
+8,manager,0.014066973625827775,Local government
+8,commission,0.012484647730499242,Local government
+8,government,0.009037592972740007,Local government
+8,cities,0.00856321677633298,Local government
+8,charter,0.008489216068777,Local government
+8,council,0.008329591527673338,Local government
+8,mayor,0.007823888960017436,Local government
+8,service,0.0076432355360543805,Local government
+9,trees,0.02009855303498858,Plants and public shrubbery
+9,meter,0.016170669584794597,Plants and public shrubbery
+9,park,0.013919286548615904,Plants and public shrubbery
+9,tree,0.011145608998977416,Plants and public shrubbery
+9,meters,0.009583299182554706,Plants and public shrubbery
+9,company,0.00827209115358617,Plants and public shrubbery
+9,water,0.00821086128334162,Plants and public shrubbery
+9,street,0.007751467249544052,Plants and public shrubbery
+9,planting,0.007744769235274094,Plants and public shrubbery
+9,shrubs,0.007305178693159083,Plants and public shrubbery
+10,water,0.08302564508014756,Water policy and infrastructure
+10,supply,0.01596715352937465,Water policy and infrastructure
+10,engineer,0.014911101777818946,Water policy and infrastructure
+10,sewage,0.011213268945846878,Water policy and infrastructure
+10,pipe,0.0106501159239936,Water policy and infrastructure
+10,consulting,0.010415647215988463,Water policy and infrastructure
+10,municipal,0.010056532337701058,Water policy and infrastructure
+10,sanitary,0.008753978987826191,Water policy and infrastructure
+10,engineers,0.008361171526994561,Water policy and infrastructure
+10,plans,0.0072849549576878975,Water policy and infrastructure

@@ -1,8 +1,8 @@
 ---
 title: "In-Class Exercise 5, Part 2: Topic Modeling *The American City*"
 subtitle: "A first topic model in R"
-author: ""
-date: ""
+author: "Aaron Tanglertpaibul"
+date: "21/10/2026"
 format:
   html:
     theme: cosmo
@@ -23,6 +23,8 @@ This is the second half of Exercise 5. On Monday you explored *The American City
 You'll also make in code the decisions Voyant made for you on Monday: what counts as a document, which words to drop, how many topics to ask for. Write each one down as you go. They come back in the last part.
 
 As before, you're graded on your documented effort, not on mastery. Start in class (pairs or groups of 3 are welcome), finish at home, and commit your own work. Each question (Q1, Q2, ...) is a prompt to discuss with your pair or group. Jotting notes after each `>` is optional, but it will help you later in the semester.
+
+topic model is unsupervised machine learning, or old school ai. the computer never knows what the words mean, the resaercher names the topics. paving has concrete, pavement, road, surface, asphalt. schools and health has shcool, health, public, schools, children, water supply has water, supply, engineer, meter, meters. the text bucket. these topics are labels that the researcher chooses. fitting a model of topics to the corpus
 :::
 
 ::: {.callout-tip}
@@ -71,6 +73,7 @@ issues
 ```
 
 `unnest_tokens()` splits the text into words, one row per word. Like Voyant, it **lowercases** everything and **drops punctuation**:
+the tokens finds the number of words, 
 
 ```{r}
 # Chunk 4
@@ -83,7 +86,9 @@ nrow(tokens)
 
 **Q1. Discuss with your pair or group:** How many words does R count in the corpus? Compare that with the total Voyant gave you in Part 1 of `E5-TextAnalysis.qmd`. If the numbers differ, why might two programs count the "same" words differently?
 
->
+>1464045 words in the corpus. The two programs might have different critieria for what counts as a word, such as I'd to I would. The differnce is in the tokenizing rules. ex: today vs to-day, city's or city 's
+
+each document is a mix of all topics, this topic model softwar describes every document as shares of each topic, documents overlap istead of being distinct 
 
 ------------------------------------------------------------------------
 
@@ -91,7 +96,7 @@ nrow(tokens)
 
 A topic model treats each **document** as a mixture of topics. On Monday a document was a whole monthly issue: about 60,000 words of streets, sewers, parks, advertisements, and conference reports. With only 24 such documents, every one would be a blend of everything.
 
-Ideally, a document would be one article. But the OCR text has no reliable article boundaries, so we'll cut each issue into **chunks of 1,000 words** instead. `%/%` is integer division: words 1–1,000 of an issue become chunk 0, words 1,001–2,000 chunk 1, and so on.
+Ideally, a document would be one article. But the OCR text has no reliable article boundaries, so we'll cut each issue into **chunks of 1,000 words** instead. `%/%` is integer division: words 1–1,000 of an issue become chunk 0, words 1,001–2,000 chunk 1, and so on. split up 24 issues of magazines into chunks of 1000 words. 
 
 ```{r}
 # Chunk 5
@@ -108,22 +113,27 @@ chunk_info
 
 **Q2. Discuss with your pair or group:** How many documents do we have now? What do we gain from chunking, and what might we lose?
 
->
+>there are 
+structural issues, lose context, the captions blend in and the order of the words dont matter. and you lose the distinctiveness of the articles, as the end of one article has different context than the begining of the next article. 
+
+what is gained by chunking into smaller 1000 word chunks, if there is large enough corpus, having the output of topic modeling, can learn about what is talked about the most and where the concentration of topics come up. the smaller the documents or the more documents one has the better. 
 
 ------------------------------------------------------------------------
 
 ## Part 3: Cleaning the tokens
 
 Like we did on Monday with Voyant's stopword list, we need to make decisions about cleaning the tokens. Here, we may remove:
+can be words, phrasws, or individual chracterd, or cna remove wirds, that are single digit numbers like 1 or 9. can also remove words that 
 
 - the `tidytext` list of common English stopwords;
 - any token that contains a digit (page numbers, prices, dates);
 - tokens shorter than 3 letters, which in OCR text are mostly fragments;
 - a custom list of our own.
+what words that have meanings of analysis that you might want to remove, can remove american, city, new, and york given that those words show up on every page 
 
 ```{r}
 # Chunk 6
-my_stopwords <- c("ing", "tion", "con", "ment")   # word fragments from line breaks; add your own
+my_stopwords <- c("ing", "tion", "con", "ment", "american", "new", "city", "york")   # word fragments from line breaks; add your own
 
 words <- tokens %>%
   anti_join(stop_words, by = "word") %>%
@@ -135,7 +145,7 @@ words %>% count(word, sort = TRUE)
 ```
 
 **Q3. Discuss with your pair or group:** Look at the 50 most frequent words above. Which junk tokens from Voyant (Part 3 of `E5-TextAnalysis.qmd`) and which others you see now would you add to `my_stopwords`? Is there a reason you can think of to remove any real words from this corpus? Which ones and why?
-
+document term matrix, are always tables, DTM and TDM rows and columns invert. rows are documents, columns are tokens/ terms. cell value represents the frequency or presence of a term in a specific document
 >
 
 ------------------------------------------------------------------------
@@ -145,6 +155,7 @@ words %>% count(word, sort = TRUE)
 `LDA()` needs a **document-term matrix**: one row per document, one column per word, counts in the cells. On Monday, Voyant's Document Terms tool showed you the same information in long form (one row per word per issue). `cast_dtm()` turns our long table into that wide matrix.
 
 We also drop words that appear fewer than 25 times in the whole corpus. Rare words can't form patterns across documents, many of them are OCR errors, and leaving them out makes the model much faster.
+create dtm with varible words
 
 ```{r}
 # Chunk 7
@@ -159,7 +170,7 @@ dtm
 
 **Q4. Discuss with your pair or group:** How many documents and how many different words (terms) are in the matrix? The output says most cells are empty (that's what **sparsity** means). Why would most words be missing from most 1,000-word chunks?
 
->
+>there are 1476 documents and 4365 terms. sparity is how many cells are empty, which is 95%, which means 95% of the term frequncy is non existent, such that some documents have more common words used than others. in a 1000 word chunk can not have more than a few hundred words, thus a page about paving has very little reason to use words not doing with paving, the 95% shows that the topics are concentrated 
 
 ------------------------------------------------------------------------
 
@@ -170,7 +181,8 @@ The method we'll use is called **LDA** (Latent Dirichlet Allocation; you only ne
 - `k`, the number of topics. There's no correct number. Too few and different subjects get lumped together; too many and topics split into near-duplicates. We'll start with 10.
 - the **seed**. LDA starts from a random guess and improves it step by step. Setting the seed makes that random start the same every time, so you (and I) get the same topics whenever you run or render the file.
 
-This chunk takes **one to two minutes**. That's normal: the algorithm is going through every word in about 1,500 documents many times over.
+This chunk takes **one to two minutes**. That's normal: the algorithm is going through every word in about 1,500 documents many times over. this chunk actuall runs the model, LDA is the most common form of topic modeling, the bag of words methods and trustedd by lingusitc exprers for finding the mathematical probablility of words showing up right next to each other. you chosse value of k or how many topics algorithim to look for and is the signifigant human input, random start, adjust again and again, settle. beta is how typical each word is of a tipic , the top words help us decide how to label the topic. gamma is how much of each docuemnt belongs to wach topic, useful to find relevant documents to close read. 
+control seed makes sure results are repeatable, as each seeds is a random start of a bucket shuffling. keep topics that are repeating while the seed repeats 
 
 ```{r}
 # Chunk 8
@@ -178,7 +190,10 @@ lda <- LDA(dtm, k = 10, control = list(seed = 446))
 ```
 
 (Topic models have one more setting, **alpha**, which controls how many topics each document tends to mix. `LDA()` estimates it for you, so we'll leave it alone.)
+counting methods, involves converting text into numbers; how often does each word appear, humans decide what counts as a word and what to compare, the computer counts and compares frequencies but does not learn anything, word counts are the fist step for machine-learning methods(next)
+walk into bracken to talk about museum ethics of displaying violent pasts. 
 
+the lda in the enviroment is the new varible that is the model itself
 ------------------------------------------------------------------------
 
 ## Part 6: What are the topics? (beta)
@@ -208,16 +223,16 @@ top_terms %>%
 ```{r}
 # Chunk 10
 topic_labels <- c(
-  "1" = "",
-  "2" = "",
-  "3" = "",
-  "4" = "",
-  "5" = "",
-  "6" = "",
-  "7" = "",
-  "8" = "",
-  "9" = "",
-  "10" = ""
+  "1" = "Government and organization",
+  "2" = "Fire safty infrastructure",
+  "3" = "Paving",
+  "4" = "Street property cost",
+  "5" = "Road ads",
+  "6" = "Civic commerce",
+  "7" = "School fire safty",
+  "8" = "Local government",
+  "9" = "Plants and public shrubbery",
+  "10" = "Water policy and infrastructure"
 )
 ```
 
@@ -360,9 +375,9 @@ Run this chunk to fit a model with only 5 topics and chart its top words. Then c
 ```{r}
 #| fig-height: 6
 # Chunk 18
-lda_5 <- LDA(dtm, k = 5, control = list(seed = 446))
+lda_20 <- LDA(dtm, k = 20, control = list(seed = 446))
 
-tidy(lda_5, matrix = "beta") %>%
+tidy(lda_20, matrix = "beta") %>%
   group_by(topic) %>%
   slice_max(beta, n = 10, with_ties = FALSE) %>%
   ungroup() %>%
@@ -371,7 +386,7 @@ tidy(lda_5, matrix = "beta") %>%
   geom_col() +
   scale_y_reordered() +
   facet_wrap(~ topic, scales = "free_y", ncol = 3) +
-  labs(title = "Top 10 words in each topic (k = 5)", x = "beta", y = NULL)
+  labs(title = "Top 10 words in each topic (k = 20)", x = "beta", y = NULL)
 ```
 
 **Q9. Discuss with your pair or group, or think it through at home:** What happens to your labeled topics when `k` is smaller or larger? Do some merge or split? Which `k` gives you topics you could actually **defend** by pointing to passages? This is a judgment call, not a correct answer.
