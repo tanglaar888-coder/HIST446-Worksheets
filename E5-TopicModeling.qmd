@@ -146,7 +146,7 @@ words %>% count(word, sort = TRUE)
 
 **Q3. Discuss with your pair or group:** Look at the 50 most frequent words above. Which junk tokens from Voyant (Part 3 of `E5-TextAnalysis.qmd`) and which others you see now would you add to `my_stopwords`? Is there a reason you can think of to remove any real words from this corpus? Which ones and why?
 document term matrix, are always tables, DTM and TDM rows and columns invert. rows are documents, columns are tokens/ terms. cell value represents the frequency or presence of a term in a specific document
->
+>Some words that include the title of the newspaper itself, So American, new york, and city can be taken out since they would show up for every single newspaper issue.  
 
 ------------------------------------------------------------------------
 
@@ -298,7 +298,7 @@ Some passages use the racial and ethnic language of 1915. As in Exercises 3 and 
 
 **Q6. Discuss with your pair or group:** Pick **two** topics and read their top three chunks. Did reading confirm your label from Part 6, or change it? Update `topic_labels` above if it changed.
 
->
+>Everyone had different words show up for their chunks, some of the chunks had different most frequent words. So we instead of looking at frequency, looked at how many related words each topic had in order to come up with a label that encompassed the most related words.
 
 ------------------------------------------------------------------------
 
@@ -342,10 +342,10 @@ Schmidt warns that a topic's top words don't always rise and fall together. A to
 
 ```{r}
 # Chunk 17
-my_topic <- 5   # change this
+local_government <- 5   # change this
 
 my_words <- top_terms %>%
-  filter(topic == my_topic) %>%
+  filter(topic == local_government) %>%
   slice_max(beta, n = 5) %>%
   pull(term)
 
@@ -358,7 +358,7 @@ words %>%
   mutate(per_10k = n / issue_words * 10000) %>%
   ggplot(aes(x = date, y = per_10k, color = word)) +
   geom_line() +
-  labs(title = paste("Top five words of topic", my_topic, "by issue"),
+  labs(title = paste("Top five words of topic", local_government, "by issue"),
        x = NULL, y = "Uses per 10,000 words", color = NULL)
 ```
 

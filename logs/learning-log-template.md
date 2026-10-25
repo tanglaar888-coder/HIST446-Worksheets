@@ -1,9 +1,9 @@
 # Weekly Learning Log
 
-* **Student Name:**
+* **Student Name:*Aaron Tanglertpaibul*
 * **Week Number:**
-* **Today's Date**
-* **Topic(s):**
+* **Today's Date*25/10/2026*
+* **Topic(s):*Topic modeling*
 
 -------------------
 
@@ -15,8 +15,8 @@ _Empty brackets (``[ ]``) work as checkboxes. You should type an X inside empty 
 
 ## What I Worked On This Week
 
-**Assignment(s):**
-- [ ] Coding Worksheet
+**Assignment(s):*E5 topic modeling*
+- [E5 ] Coding Worksheet
 - [ ] Other
 
 If you marked Coding Worksheet, what is the worksheet number? 
