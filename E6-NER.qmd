@@ -1,0 +1,637 @@
+---
+title: "Exercise 6: Places in Text, Places on a Map"
+subtitle: "Named entity recognition and geocoding in R"
+author: ""
+date: ""
+format:
+  html:
+    theme: cosmo
+    highlight-style: dracula
+    code-overflow: wrap
+    css: assets/styles.css
+    df-print: paged
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+---
+
+::: callout-note
+## What is this exercise?
+
+This week's two readings are about places in printed text. Blevins counted every place name in a Houston newspaper to recover the geography its readers were shown. My paper "An Imagined Geography of Empire" used **named entity recognition (NER)** to do something similar with St. Louis newspapers during the 1904 World's Fair. In this exercise you'll do both halves of that work yourself, with two sources you already know:
+
+- **Parts 1–4, *The American City* (1915–1916).** A pre-trained NER model finds the place names in all 24 issues. A **gazetteer** (a list of places with coordinates) turns those names into points, and you map the geography this magazine printed.
+- **Parts 5–6, the 1925 Muncie city directory.** You take the addresses you parsed in Exercise 1, send them to the U.S. Census Bureau's **geocoder**, and map where these people lived.
+
+**This exercise is done at home, on your own.** We won't meet on Wednesday (10/28), so everything you need is in this file. Run each chunk in order (they're numbered `# Chunk 1`, `# Chunk 2`, ...), read the output, and **write your answers after each `>`**. As always, you're graded on documented effort, not on mastery. If a chunk gives you an error you can't fix, copy the error message under the nearest question and keep going.
+
+Budget about 75 minutes. Two chunks need an internet connection (Chunks 7 and 21), and two can take a few minutes the first time you run them (Chunks 9 and 21).
+:::
+
+::: callout-tip
+## Two ways to find places in a text
+
+**Rule-based:** you write down what to look for (a list of names, a pattern like "a number, then a street") and the computer finds exact matches. This is how the code in Exercise 1 (`E1-DirectoryToDatabase`) transcribed Muncie's city directory.
+
+**Model-based:** a **model** trained on thousands of sentences that people already labeled guesses which words are names, *including names it has never seen*, from clues like capital letters and the words around them ("in ***", "Mayor*** "). The model we'll use was trained on Reuters news stories from 1996–1997. It finds four kinds of names: **PER** (people), **LOC** (locations), **ORG** (organizations), and **MISC** (everything else, mostly nationalities and events).
+:::
+
+## Setup
+
+This exercise uses three packages you haven't installed yet. Run this line **once**, in your **console** (not in this file), and answer `n` if R asks about installing from sources:
+
+``` r
+install.packages(c("nametagger", "tidygeocoder", "maps"))
+```
+
+Then run Chunk 1:
+
+```{r}
+#| message: false
+# Chunk 1
+library(tidyverse)
+library(tidytext)       # unnest_tokens()
+library(nametagger)     # the NER model
+library(maps)           # a list of U.S. cities, and state outlines
+library(tidygeocoder)   # sends addresses to the Census geocoder
+
+dir.create("output/exercise6", recursive = TRUE, showWarnings = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Part 1: *The American City*, paragraph by paragraph
+
+The first two chunks are the same as in Exercise 5: unzip the 24 issues and read each one into a row.
+
+```{r}
+# Chunk 2
+files <- unzip("data/AmericanCity_1915-1916.zip", exdir = tempdir())
+```
+
+```{r}
+# Chunk 3
+issues <- tibble(file = files) %>%
+  mutate(issue = tools::file_path_sans_ext(basename(file)),   # "1915-01_January"
+         date  = ym(str_sub(issue, 1, 7)),
+         text  = map_chr(file, read_file)) %>%
+  select(issue, date, text)
+
+issues
+```
+
+In Exercise 5 we lowercased every word and threw away the punctuation. **For NER we can't.** Capital letters and periods are some of the model's best clues. So this time we only do two repairs, both to the OCR text:
+
+- The scanned pages break long words across lines with a hyphen ("Massa-" / "chusetts"). We join those pieces back together.
+- The OCR also left invisible "soft hyphens" inside some words. We delete them.
+
+Then we cut each issue at its blank lines. The result is close to one paragraph per row, though OCR sometimes splits a paragraph or glues two together. We drop pieces shorter than five words (page numbers, stray letters).
+
+```{r}
+# Chunk 4
+paragraphs <- issues %>%
+  mutate(text = str_remove_all(text, "\\x{00AD}")) %>%                    # invisible soft hyphens
+  separate_longer_delim(text, delim = regex("\n\\s*\n")) %>%              # cut at blank lines
+  mutate(text = str_replace_all(text, "-\\s*\n\\s*", ""),                 # "Massa-\nchusetts" -> "Massachusetts"
+         text = str_squish(text)) %>%                                     # remaining line breaks become spaces
+  filter(str_count(text, "\\S+") >= 5) %>%
+  mutate(paragraph_id = row_number())
+
+nrow(paragraphs)
+```
+
+Read five random paragraphs. Run the chunk a few times to see different ones.
+
+```{r}
+# Chunk 5
+paragraphs %>%
+  slice_sample(n = 5) %>%
+  pull(text)
+```
+
+**Q1.** Find two place names in the paragraphs you read, and one place where the OCR split a name. Then explain in your own words why we kept the capital letters this time, when we removed them for topic modeling in Exercise 5.
+
+> 
+
+------------------------------------------------------------------------
+
+## Part 2: Run the model
+
+The model needs the input to be one word per line, but each row still needs to be one paragraph. Each paragraph should become one block of text with a word on every line. We can use `\n` to create line breaks inside the same row. Let's use `unnest_tokens()` to split the paragraphs and create a temporary table with one word per row. This time we use `to_lower = FALSE` and `strip_punct = FALSE` to keep capitalized letters and punctuation.
+
+```{r}
+# Chunk 6-A
+ner_input <- paragraphs %>%
+  unnest_tokens(term, text, token = "words", to_lower = FALSE, strip_punct = FALSE)
+
+ner_input
+```
+
+The temporary table has 1,638,383 rows, one per word. Before feeding it to the NER model, we need to regroup the words into paragraphs, so our input has one paragraph per row, but with line breaks (`\n`) separating every word.
+
+```{r}
+# Chunk 6-B
+ner_input <- ner_input %>% 
+  group_by(doc_id = issue, sentence_id = paragraph_id) %>%
+  summarize(text = str_c(term, collapse = "\n"), .groups = "drop")
+
+ner_input
+```
+
+Now let's load the model. The first time you run Chunk 7 it downloads the English model (trained on the CoNLL-2003 Reuters news data) to a folder outside your repository, so it could take a minute or so. After that it loads the saved copy.
+
+We should test the model on a single paragraph from the January 1915 issue first:
+
+```{r}
+# Chunk 7
+model_dir  <- tools::R_user_dir("nametagger", which = "cache")
+model_path <- file.path(model_dir, "english-conll-140408.ner")
+
+if (!file.exists(model_path)) {
+  dir.create(model_dir, recursive = TRUE, showWarnings = FALSE)
+  model <- nametagger_download_model("english-conll-140408", model_dir = model_dir)
+} else {
+  model <- nametagger_load_model(model_path)
+}
+
+example <- ner_input %>%
+  filter(str_detect(text, "Brandywine")) %>%
+  slice(1)
+
+tagged_example <- predict(model, example)
+tagged_example
+```
+
+Scroll through `tagged_example`. Notice that the model returns **one row per word again**. The `entity` column shows the model's guesses. Possible tags are: `LOC` for locations, `PER` for persons, `ORG` for organizations, and `MISC` for miscellaneous proper names that aren't any of the above.
+
+**Q2.** This model also uses the **B-/I-/O** code that we've seen in class on Monday (10/26). What do `B-LOC` and `I-LOC` mean? What is the `O` code used for?
+
+> 
+
+One word per row isn't what we want because examples like "New" and "York" should be a single place. The function below walks down the rows and glues each `B-` word to the `I-` words that follow it:
+
+```{r}
+# Chunk 8
+tags_to_names <- function(tagged) {
+  tagged %>%
+    filter(entity != "O") %>% # keep only words inside a name
+    mutate(type = str_remove(entity, "^[BI]-"),  # "B-LOC" -> "LOC"
+           name_id = cumsum(str_starts(entity, "B-"))) %>% 
+                    # every B- starts a new name
+    group_by(doc_id, sentence_id, name_id, type) %>%
+    summarize(name = str_c(term, collapse = " "), .groups = "drop") %>%
+    mutate(name = str_replace_all(name, "\\s+([.,;:])", "\\1")) %>%   # "St . Louis" -> "St. Louis"
+    select(doc_id, sentence_id, type, name)
+}
+
+tags_to_names(tagged_example)
+```
+
+Now run the model on all 24 issues. This is about 1.6 million words, so it takes a few minutes. The chunk saves the result to `output/exercise6/amcity_entities.csv`, and the next time you run it (or render the file) it reads that file instead of running the model again.
+
+```{r}
+# Chunk 9
+entities_file <- "output/exercise6/amcity_entities.csv"
+
+if (!file.exists(entities_file)) {
+  entities <- predict(model, ner_input) %>%
+    tags_to_names()
+  write_csv(entities, entities_file)
+}
+
+entities <- read_csv(entities_file, show_col_types = FALSE) %>%
+  rename(issue = doc_id, paragraph_id = sentence_id)
+
+entities
+```
+
+------------------------------------------------------------------------
+
+## Part 3: What did the model find?
+
+How many names of each type?
+
+```{r}
+# Chunk 10
+entities %>%
+  count(type, sort = TRUE)
+```
+
+The 30 most frequent locations:
+
+```{r}
+# Chunk 11
+loc_counts <- entities %>%
+  filter(type == "LOC") %>%
+  count(name, sort = TRUE, name = "mentions")
+
+loc_counts %>% slice_head(n = 30)
+```
+
+**Q3.** Read the top 30 locations. Which are not cities at all (states, regions, countries)?
+
+> 
+
+The other types are worth a look too:
+
+```{r}
+# Chunk 12
+entities %>%
+  filter(type %in% c("MISC", "ORG")) %>%
+  count(type, name, sort = TRUE) %>%
+  group_by(type) %>%
+  slice_head(n = 15)
+```
+
+**Q4-A.** Can you spot wrongly tagged entities above?
+
+> 
+
+**Q4-B.** Many MISC names are nationalities or adjectives ("American", "German"). My paper counted "Brazilian" as a mention of Brazil, because at the St. Louis world's fair every nationality represented a geographic place. Would that decision make sense for *The American City*? Give one example from your MISC list where lumping a nationality with a place would help, and one where it would mislead.
+
+> 
+
+------------------------------------------------------------------------
+
+## Part 4: From names to points: a gazetteer
+
+A name isn't a location until we give it coordinates. To do that we'll use a **gazetteer**, a table of place names with their coordinates. The `maps` package in R includes one: `us.cities`, about 1,000 U.S. cities with a population over 40,000, plus all state capitals. But there's a catch: It's a *modern* list.
+
+Let's clean it to match how *The American City* prints names: "Muncie IN" becomes "Muncie", "WASHINGTON DC" becomes "Washington", and "Saint Louis" becomes "St. Louis".
+
+```{r}
+# Chunk 13
+us.cities <- us.cities
+gazetteer <- us.cities %>%
+  mutate(place = str_remove(name, " [A-Z]{2}$"), # drop the state code
+         place = if_else(place == str_to_upper(place), str_to_title(place), place),# if the name starts with a captial letter, make it so every word in the name is capitalized, like in titles
+         place = str_replace(place, "^Saint ", "St. ")) %>%
+  select(place, state = country.etc, pop, lat, long)
+
+gazetteer %>% filter(place %in% c("Muncie", "Washington", "St. Louis"))
+```
+
+Now we can join our location counts to the gazetteer. Some names match more than one city:
+
+```{r}
+# Chunk 14-A
+matched <- loc_counts %>%
+  inner_join(gazetteer, by = c("name" = "place"), relationship = "many-to-many")
+
+matched %>%
+  add_count(name, name = "candidates") %>%
+  filter(candidates > 1) %>%
+  arrange(desc(mentions), name)
+```
+
+Pick one ambiguous name from this table (Springfield, Portland, Columbus...). Find one paragraph where it appears.
+
+```{r}
+# Chunk 14-B
+#| eval: false
+paragraphs %>% 
+  filter(str_detect(text, "__________")) %>% 
+  pull(text) %>%
+  head(n = 15)
+```
+
+**Q5.** Which city does the magazine mean, and how did you tell? Go back to our reading for Monday's class. How did Cameron Blevins decide which "Washington" or "Springfield" a Houston newspaper meant?
+
+> 
+
+We need some rule for the ambiguous names. Here's a common and blunt one: pick the place with the largest population. This rule is a guess. It assumes the biggest city is the one people most likely meant. That’s often reasonable, but here it’s problematic for two reasons:
+
+1.  the populations in `us.cities` are modern, not 1915 figures;
+2.  the magazine may well have meant Springfield, IL (the state capital) or Springfield, OH.
+
+We'll still go with it for now:
+
+```{r}
+# Chunk 15-A
+places <- matched %>%
+  group_by(name) %>%
+  slice_max(pop, n = 1, with_ties = FALSE) %>%  # the blunt rule
+  ungroup()
+places
+```
+
+Now let's look at the names that didn't match anything:
+
+```{r}
+# Chunk 15-B
+unmatched_places <- loc_counts %>%
+  anti_join(gazetteer, by = c("name" = "place"))
+unmatched_places %>% slice_head(n = 30)
+```
+
+Now let's compare. How many place names mentioned in the magazine were we able to attach coordinates to?
+
+```{r}
+# Chunk 15-C
+sum(places$mentions) / sum(loc_counts$mentions) 
+# share of LOC mentions we can map
+```
+
+Using `us.cities`, we were only able to attach coordinates to around 33% of the place mentions in the magazine. This share represents how much of the magazine's geography this specific gazetteer can map.
+
+**Q6.** What kinds of places does a modern list of big cities miss in a 1915 magazine?
+
+> 
+
+Now let's map it. Each point is a city, and its size shows how many times the magazine named it:
+
+```{r}
+#| fig-width: 10
+#| fig-height: 6
+# Chunk 16
+us_states <- map_data("state")
+
+ggplot() +
+  geom_polygon(data = us_states, aes(x = long, y = lat, group = group),
+               fill = "grey95", color = "grey70", linewidth = 0.2) +
+  geom_point(data = places, aes(x = long, y = lat, size = mentions),
+             alpha = 0.5, color = "firebrick") +
+  coord_quickmap(xlim = c(-125, -66), ylim = c(24, 50)) +
+  scale_size_area(max_size = 12) +
+  labs(title = "Cities named in The American City, 1915-1916",
+       subtitle = "Location names found by NER, matched to a modern gazetteer (largest city when a name is ambiguous)",
+       x = NULL, y = NULL, size = "Mentions") +
+  theme_void() +
+  theme(plot.margin = margin(10, 10, 10, 10))
+```
+
+```{r}
+# Chunk 16-B
+# save your outputs
+ggsave("output/exercise6/amcity_places_map.png", width = 10, height = 6, bg = "white")
+write_csv(places, "output/exercise6/amcity_places.csv")
+```
+
+**Q7.** Describe the geography on your map. Where is it dense, where is it empty? *The American City* was published in New York for city officials across the country: how much of what you see is the magazine's readership, and how much is where it was made (the masthead, its advertisers' addresses)? Compare with Blevins's finding about Houston: does this look like a national geography or a regional one?
+
+> 
+
+------------------------------------------------------------------------
+
+## Part 5: Muncie, 1925: names in a directory
+
+The next chunk is the parsing code from Data Exercise 1 (`E1-DirectoryToDatabase`), which turns pages 200–214 of the 1925 Muncie City Directory into one row per entry.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the Exercise 1 code"
+# Chunk 17
+pages <- read_csv("data/citydir-1925-sample.csv", show_col_types = FALSE)
+
+lines <- pages %>%
+  separate_longer_delim(text, delim = "\n") %>%
+  rename(line = text) %>%
+  mutate(line = str_squish(line)) %>%
+  filter(line != "") %>%
+  mutate(line = str_remove(line, "^(([^A-Za-z0-9\\s.*]\\S*|\\S*[^A-Za-z0-9\\s.*]\\S*|[a-z](\\.[a-z])?|\\d)\\s)+(?=\\*?[A-Z][a-z'-]+ (Mrs\\. )?[A-Z].*\\b(res|rooms|bds)\\b)"))
+# NEW in E6: delete OCR margin junk ("~", "::C", "u") in front of an entry. We didn't catch these in E1
+
+entries <- lines %>%
+  mutate(entry_id = cumsum(str_detect(line, "^\\*?\\s?[A-Z][a-z'-]+ (Mrs\\. )?[A-Z]"))) %>%
+  group_by(pagetitle, entry_id) %>%
+  summarize(entry = str_c(line, collapse = " "), .groups = "drop") %>%
+  mutate(entry = str_replace_all(entry, "-\\s", ""))
+
+name_pattern <- "^\\*?\\s?[A-Z][a-z'-]+(\\s(Mrs\\.|[A-Z][A-Za-z]*\\.?|jr\\.))*(\\s\\([^)]*\\))?,?"
+
+by_machine <- entries %>%
+  mutate(
+    asterisk   = str_detect(entry, "^\\*"),
+    name       = str_extract(entry, name_pattern) %>% str_remove("^\\*\\s?") %>% str_remove(",$") %>% str_squish(),
+    surname    = word(name, 1),
+    given      = str_remove(name, "^\\S+\\s?") %>% str_remove("\\s?\\(.*$"),
+    spouse     = str_match(name, "\\(([^)]+)\\)")[, 2],
+    rest       = str_remove(entry, name_pattern) %>% str_squish(),
+    occupation = str_extract(rest, "^(?!res\\b|rooms\\b|bds\\b)[a-z][^,]*?(?=,|\\s(res|rooms|bds)\\b|$)"),
+    housing    = str_match(entry, "\\b(res|rooms|bds)\\b")[, 2],
+    address    = str_match(entry, "\\b(?:res|rooms|bds)\\b\\.?,?\\s+(.+)$")[, 2]
+  ) %>%
+  select(pagetitle, entry_id, entry, asterisk, surname, given, spouse, occupation, housing, address)
+
+by_machine
+```
+
+In Exercise 1, you found names and employers in two ways: by hand, reading the scans (Part 2), and with a set of rules written as regular expressions (Part 3). Those rules pulled out names, occupations, and addresses, but not employers. What does the NER model find in the same entries? Let's use `tags_to_names()` from Chunk 8:
+
+```{r}
+# Chunk 18-A
+directory_names <- by_machine %>%
+  mutate(entry = str_remove_all(entry, "\\x{00AD}")) %>%            # soft hyphens again
+  unnest_tokens(term, entry, token = "words", to_lower = FALSE, strip_punct = FALSE) %>%
+  group_by(doc_id = pagetitle, sentence_id = entry_id) %>%
+  summarize(text = str_c(term, collapse = "\n"), .groups = "drop") %>%
+  predict(model, .) %>%
+  tags_to_names()
+
+directory_names %>% count(type, sort = TRUE)
+```
+
+```{r}
+# Chunk 18-B
+directory_names %>%
+  filter(type == "ORG") %>%
+  count(name, sort = TRUE)
+```
+
+**Q8-A.** Look at the `ORG` list above. Which employers did the model find, and what did it get wrong? Find at least three examples of mislabeled entities and three examples of correctly identified organizations.
+
+> 
+
+**Q8-B.** Then think back to Exercise 1: for a city directory, would you rather use your own hand transcription (like you did in E1, Part 2), or this pre-trained NER model?
+
+> 
+
+------------------------------------------------------------------------
+
+## Part 6: Geocoding Muncie
+
+**Geocoding** turns an address into coordinates. The Census Bureau's geocoder is free, needs no account, and knows every street address range in today's United States. But as always, there's a catch: It doesn't know 1925 addresses.
+
+So, before sending anything, the addresses need work. Here are the decisions this chunk makes, one per line:
+
+1.  Repair OCR: soft hyphens, "Madi-son", "S . Plum", "A.v", stray periods, and street numbers split by spaces ("27 09" becomes "2709").
+2.  Keep only what looks like *number + (direction) + street name + (Av)*. "Same" and "R. F. D. 6" (a rural mail route) can't be geocoded, so they drop out, along with anything the OCR broke too badly to read.
+3.  Drop the "½" (half-numbers like 510½ were usually upstairs or rear units), and write "2d" and "3d" as "2nd" and "3rd".
+4.  The directory prints "Av" for avenues and **no type at all** for most other streets. We assume those are streets and add "St".
+
+```{r}
+# Chunk 19
+addresses <- by_machine %>%
+  filter(!is.na(address)) %>%
+  mutate(
+    work_address = str_match(entry, "(\\d+\\S*\\s[^,]*?)\\.?,?\\s+(?:res|rooms|bds)\\b\\.?\\s+same\\b")[, 2],
+    # "res. same" = lives at the business address printed just before
+    address = if_else(str_detect(address, "^same\\b") & !is.na(work_address), work_address, address)
+    ) %>%
+  mutate(
+      clean = address %>%
+      str_remove_all("\\x{00AD}") %>% 
+      # remove soft hyphens (invisible OCR hyphens)
+      str_replace_all("(?<=\\s)[^A-Za-z0-9\\s.\\x{00BD}]+(?=\\s)", "") %>% str_squish() %>%
+        # remove stray symbols between words ("301 ~ E. Seymour")
+      str_replace_all("(?<=[a-z])-(?=[a-z])", "") %>%
+      # Madi-son -> Madison
+      str_replace_all("\\s+\\.", ".") %>%
+      # S . Plum -> S. Plum
+      str_replace_all("A\\.v\\b", "Av") %>%
+      # A.v -> Av
+      str_remove("^[.\\s]+") %>%
+      # remove stray leading periods
+      str_replace("^(\\d+) (\\d+) (\\d+)(?=\\s)", "\\1\\2\\3") %>%  
+      # 2 11 9 -> 2119
+      str_replace("^(\\d+) (\\d+)(?=\\s)", "\\1\\2"),
+      # 27 09 -> 2709
+    street = str_extract(clean, "^\\d+\\s?\\x{00BD}?\\s([NSEW]\\.?\\s)?[A-Z0-9][A-Za-z0-9]+(\\sAv\\b)?"),
+      # pull every street address and ignore what comes after
+    street = street %>%
+      str_remove("\\s?\\x{00BD}") %>%                           
+      # 510½ -> 510
+      str_replace("\\b2d\\b", "2nd") %>%
+      # 2d -> 2nd
+      str_replace("\\b3d\\b", "3rd") %>%
+      # 3d -> 3rd
+      str_replace("\\sAv$", " Ave"),
+      # Av -> Ave
+    street = if_else(str_detect(street, "Ave$"), street, str_c(street, " St"))
+    # keep addresses with "Ave" as is; add "St" to those without "Ave"
+  )
+
+addresses %>% select(street, address)
+```
+
+Which addresses did we lose before the geocoder even sees them?
+
+```{r}
+# Chunk 20-A
+addresses %>% filter(is.na(street)) %>% select(entry, address)
+```
+
+**Q9.** Look at the addresses Chunk 20-A dropped. Pick two or three of them and say what kind of place each one is (a hotel? another town? a garbled OCR line?). Do you think the people we lose at this step are a random sample of the directory, or are some kinds of people more likely to disappear? Explain in two or three sentences.
+
+> 
+
+Now, let's pass the addresses we have to the U.S. Census geocoder. Chunk 21 sends all the distinct addresses to the Census Bureau in one batch and saves the answer with latitude and longitude values, so you only send them once.
+
+First, how many unique addresses are we sending to the geocoder?
+
+```{r}
+# Chunk 20-B
+addresses_distinct <- addresses %>%
+  filter(!is.na(street)) %>%
+  distinct(street)
+
+nrow(addresses_distinct) # how many unique addresses we'll send
+```
+
+::: callout-warning
+## If the Census geocoder doesn't answer
+
+Government servers sometimes go down. If Chunk 21 gives you an error, run this line in your **console** and then run Chunk 21 again. It copies a version I geocoded with this exact code:
+
+`file.copy("data/muncie-1925-geocoded.csv", "output/exercise6/muncie_geocoded.csv")`
+:::
+
+```{r}
+#| message: false
+# Chunk 21
+geo_file <- "output/exercise6/muncie_geocoded.csv"
+
+if (!file.exists(geo_file)) {
+  geocoded <- addresses_distinct %>%
+    mutate(city = "Muncie", state = "IN") %>%
+    geocode(street = street, city = city, state = state,
+            method = "census", mode = "batch", full_results = TRUE)
+  write_csv(geocoded, geo_file)
+}
+
+geocoded <- read_csv(geo_file, show_col_types = FALSE)
+```
+
+The Census geocoder reports two things for every address. `match_indicator` says whether it found the address (`Match`, `No_Match`, or `Tie` when two places fit equally well). `match_type` says whether the match was `Exact` or `Non_Exact`, meaning it had to change something:
+
+```{r}
+# Chunk 22
+geocoded %>%
+  count(match_indicator, match_type) %>%
+  mutate(share = round(n / sum(n), 2))
+```
+
+A match isn't necessarily a correct match. Compare what we sent with what the geocoder says it found:
+
+```{r}
+# Chunk 23
+geocoded %>%
+  filter(match_indicator == "Match") %>%
+  select(street, matched_address, match_type) %>%
+  arrange(match_type)
+```
+
+**Q10.** Muncie has renamed and renumbered streets since 1925, and some 1925 blocks no longer exist. How could you check whether "1300 Butler St" in 1925 is the same spot as 1300 Butler St today? (Name a source, not a method in R.)
+
+> 
+
+Last step: join the coordinates back to the **people**, map them, and save the addresses that failed for our GIS lab visit next week. Each point is one directory entry. Orange points are entries the publisher marked with an asterisk.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 7
+# Chunk 24-A
+residents <- addresses %>%
+  left_join(geocoded %>% select(street, lat, long, match_indicator, match_type, matched_address),
+            by = "street")
+
+muncie <- residents %>%
+  filter(between(lat, 40.10, 40.30), between(long, -85.50, -85.25))   # drop matches outside Muncie
+
+match_rate <- round(100 * nrow(muncie) / nrow(by_machine))
+
+ggplot(muncie, aes(x = long, y = lat)) +
+  geom_point(aes(color = asterisk, size = asterisk), alpha = 0.7) +
+  scale_color_manual(values = c(`FALSE` = "grey60", `TRUE` = "#D55E00"),
+                     labels = c("No mark", "Marked with an asterisk")) +
+  scale_size_manual(values = c(`FALSE` = 1.5, `TRUE` = 3),
+                    labels = c("No mark", "Marked with an asterisk")) +
+  coord_quickmap() +
+  labs(title = "Where did they live? Muncie city directory, 1925",
+       subtitle = "A sample: directory pages 200-214, surnames Cu- to De-",
+       caption = str_glue("{nrow(muncie)} of {nrow(by_machine)} entries placed ({match_rate}%), geocoded with today's Census street data."),
+       x = NULL, y = NULL, color = NULL, size = NULL) +
+  theme_minimal()
+```
+
+```{r}
+# Chunk 24-B
+# save your outputs
+ggsave("output/exercise6/muncie_1925_map.png", width = 7, height = 7, bg = "white")
+
+residents %>%
+  filter(is.na(lat)) %>%
+  select(entry, address, street) %>%
+  write_csv("output/exercise6/unmatched.csv")
+```
+**Q11.** The map has no streets, river, or rail lines. What would you need to add before it could say anything about 1925 Muncie? Then go back to your answer to the last question of Exercise 1. Now that you've actually mapped the asterisk, what should a responsible version of this map include or explain before anyone sees it?
+
+> 
+
+------------------------------------------------------------------------
+
+## Save, Commit, Push
+
+Render this file. Rendering re-uses the saved model results and geocoding results in `output/exercise6/`, so it only takes a minute. Then, in GitHub Desktop, commit this file, the `.html`, and the `output/exercise6/` folder with a message like "Exercise 6: NER and geocoding," and **Push origin**.
+
+::: callout-tip
+## Sources
+
+- *The American City*, vols. 12–15 (New York: The Civic Press, 1915–1916), OCR text from digitized copies.
+- *Muncie City Directory, 1925–26*, pages 200–214, Ball State University Digital Media Repository.
+- Cameron Blevins, "Space, Nation, and the Triumph of Region: A View of the World from Houston," *Journal of American History* 101, no. 1 (2014): 122–147.
+- Luc Avelar, "An Imagined Geography of Empire," 2023.
+- Jana Straková, Milan Straka, and Jan Hajič, NameTag, Institute of Formal and Applied Linguistics, Charles University. English model `english-conll-140408`, trained on the CoNLL-2003 data (CC BY-NC-SA). R package `nametagger` by Jan Wijffels.
+- U.S. Census Bureau Geocoder, through the R package `tidygeocoder` by Jesse Cambon et al.
+- `us.cities` and state outlines from the R package `maps`.
+:::
