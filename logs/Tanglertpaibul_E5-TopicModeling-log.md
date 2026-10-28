@@ -77,14 +77,14 @@ _Replace the placeholder text in brackets ``[   ]`` for specific details of your
 >Schmidt warns that a topic's top words don't always rise and fall together. A topic's line can look like one trend when really one word is doing all the work. This chunk plots how often the top five words of one topic appear in each issue. Change `my_topic` to a topic you've labeled:
 
 **Describe the task or problem:**
->
+>have to change my_topic but doenst say to what, so I am trying to change it to the topic_labels from chunk 10, however top_terms is not found
 
 **Describe the error, confusion, or obstacle you encoutered:**
->
+>I dont know how to make top_terms to be found, a
 
 **Describe your attempts to problem-solve the issue:**
 Attempts:
-1. > 
+1. > searched were top terms appeared
 2. >
 3. >
 
@@ -97,13 +97,13 @@ _Replace the placeholder text in brackets ``[   ]`` for specific details of your
 - [ ] Course materials: [which-ones]
 - [ ] Class discussion
 - [ ] Office hours
-- [ ] Other: [describe]
+- [x ] Other: [close reading of prior coding chunks]
 
 **Did you figure out a solution?**
->
+>just redid all the coding chunks
 
 **What did you learn from this challenge?**
->
+>that when reopeing a coding worksheet, rerun all the chunks
 
 _Repeat the template above for any additional challenges you would like to include here._
 
