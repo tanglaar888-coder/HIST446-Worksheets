@@ -1,8 +1,8 @@
 ---
 title: "Exercise 6: Places in Text, Places on a Map"
 subtitle: "Named entity recognition and geocoding in R"
-author: ""
-date: ""
+author: "Aaron Tanglertpaibul"
+date: "11/2/2026"
 format:
   html:
     theme: cosmo
@@ -111,7 +111,7 @@ paragraphs %>%
 
 **Q1.** Find two place names in the paragraphs you read, and one place where the OCR split a name. Then explain in your own words why we kept the capital letters this time, when we removed them for topic modeling in Exercise 5.
 
-> 
+> The capital letters are kept in order to serve as a starting point but can introduce irwgularities with Provi pENCE being an example of a split name, 
 
 ------------------------------------------------------------------------
 
@@ -166,7 +166,7 @@ Scroll through `tagged_example`. Notice that the model returns **one row per wor
 
 **Q2.** This model also uses the **B-/I-/O** code that we've seen in class on Monday (10/26). What do `B-LOC` and `I-LOC` mean? What is the `O` code used for?
 
-> 
+> B-loc and I-loc means that the capitalized word is the begining of b-loc and that the next cap word after the capitalized word is to be included as I-loc thus both words are a part of the same place name
 
 One word per row isn't what we want because examples like "New" and "York" should be a single place. The function below walks down the rows and glues each `B-` word to the `I-` words that follow it:
 
@@ -230,7 +230,7 @@ loc_counts %>% slice_head(n = 30)
 
 **Q3.** Read the top 30 locations. Which are not cities at all (states, regions, countries)?
 
-> 
+> mass, lll, wis, mich, pa
 
 The other types are worth a look too:
 
@@ -245,11 +245,11 @@ entities %>%
 
 **Q4-A.** Can you spot wrongly tagged entities above?
 
-> 
+> new york is listed as org instead of misc
 
 **Q4-B.** Many MISC names are nationalities or adjectives ("American", "German"). My paper counted "Brazilian" as a mention of Brazil, because at the St. Louis world's fair every nationality represented a geographic place. Would that decision make sense for *The American City*? Give one example from your MISC list where lumping a nationality with a place would help, and one where it would mislead.
 
-> 
+> lumping in german with a german town or cultural specific thing would make sense while lumping in german with us place names wouldnt.
 
 ------------------------------------------------------------------------
 
@@ -290,14 +290,14 @@ Pick one ambiguous name from this table (Springfield, Portland, Columbus...). Fi
 # Chunk 14-B
 #| eval: false
 paragraphs %>% 
-  filter(str_detect(text, "__________")) %>% 
+  filter(str_detect(text, "Newark")) %>% 
   pull(text) %>%
   head(n = 15)
 ```
 
 **Q5.** Which city does the magazine mean, and how did you tell? Go back to our reading for Monday's class. How did Cameron Blevins decide which "Washington" or "Springfield" a Houston newspaper meant?
 
-> 
+> When searching for Newark, the context of its use switches from geographically placing a company,or as a call to action for the community of newakr
 
 We need some rule for the ambiguous names. Here's a common and blunt one: pick the place with the largest population. This rule is a guess. It assumes the biggest city is the one people most likely meant. That’s often reasonable, but here it’s problematic for two reasons:
 
