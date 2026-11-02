@@ -297,7 +297,7 @@ paragraphs %>%
 
 **Q5.** Which city does the magazine mean, and how did you tell? Go back to our reading for Monday's class. How did Cameron Blevins decide which "Washington" or "Springfield" a Houston newspaper meant?
 
-> When searching for Newark, the context of its use switches from geographically placing a company,or as a call to action for the community of newakr
+> When searching for Newark, the context of its use switches from geographically placing a company,or as a call to action for the community of newark
 
 We need some rule for the ambiguous names. Here's a common and blunt one: pick the place with the largest population. This rule is a guess. It assumes the biggest city is the one people most likely meant. That’s often reasonable, but here it’s problematic for two reasons:
 
@@ -336,7 +336,7 @@ Using `us.cities`, we were only able to attach coordinates to around 33% of the 
 
 **Q6.** What kinds of places does a modern list of big cities miss in a 1915 magazine?
 
-> 
+> The big cities currently were, at least many of them, were not big cities in 1915, and associated importance and relational connections are different 
 
 Now let's map it. Each point is a city, and its size shows how many times the magazine named it:
 
