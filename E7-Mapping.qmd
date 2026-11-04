@@ -1,0 +1,477 @@
+---
+title: "Exercise 7: Mapping Muncie, 1925"
+subtitle: "Base layers, small multiples, and interactive maps in R"
+author: ""
+date: ""
+format:
+  html:
+    theme: cosmo
+    highlight-style: dracula
+    code-overflow: wrap
+    css: assets/styles.css
+    df-print: paged
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+---
+
+::: callout-note
+## What is this exercise?
+
+In Exercise 6 you geocoded about 300 people from the 1925 Muncie city directory and put them on a blank grid. A dot on a blank grid isn't a map yet. On Monday, at the Maps and GIS Center, you saw what historians and mapmakers put *underneath* their points. Today we'll do four things with the same people:
+
+- **Part 2:** draw them on top of **base layers**: streets, the White River, railroads, and city limits, downloaded from the Census Bureau.
+- **In class:** georeference a **1919 map of Muncie** together in Allmaps, one point each.
+- **Part 3:** map them **three different ways** and ask what claim each version makes.
+- **Part 4:** build an **interactive map** where every dot opens the original directory entry and a link to its scanned page, with the 1919 map underneath.
+
+**This is the last exercise that introduces a new method.** From here on, the question is which of our methods (EDA and charts, text analysis, topic modeling, NER, geocoding and mapping) fits *your* sources. Part 5 asks you to start planning that, ahead of the Method Selection & Revised Question assignment.
+
+Start in class with a partner and finish at home. **Follow along with the slides:** each "Your turn" slide tells you which chunks to run and gives you something to discuss with your partner. This file has only two questions: **Q1** is discussed in class (notes after the `>` are optional), and **Q2** is done at home, and written answers are required. Commit your own work. As always, you're graded on documented effort, not on mastery.
+:::
+
+## Setup
+
+This exercise uses three new packages:
+
+- `sf` ("simple features") stores maps as ordinary tables, with a `geometry` column for the shapes.
+- `tigris` downloads map layers from the U.S. Census Bureau.
+- `leaflet` makes interactive web maps.
+
+Run this line **once**, in your **console** (not in this file), and answer `n` if R asks about installing from sources:
+
+``` r
+install.packages(c("sf", "tigris", "leaflet"))
+```
+
+Then run Chunk 1:
+
+```{r}
+#| message: false
+# Chunk 1
+library(tidyverse)
+library(sf)        # maps as tables
+library(tigris)    # Census Bureau map layers
+library(leaflet)   # interactive maps
+
+options(tigris_use_cache = TRUE)   # keep downloaded layers on your computer
+dir.create("output/exercise7", recursive = TRUE, showWarnings = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Part 1: The Muncie residents again
+
+Chunk 2 rebuilds the table from the end of Exercise 6: it parses pages 200–214 of the directory, cleans the addresses, and joins them to the coordinates the Census geocoder returned.
+
+To make sure everyone starts from the same data, it uses my geocoded copy in `data/muncie-1925-geocoded.csv` instead of yours.
+
+It also adds one new column, `pageptr`, the Digital Media Repository's ID for each scanned page. We'll use it in Part 4.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the Exercise 6 code"
+# Chunk 2
+pages <- read_csv("data/citydir-1925-sample.csv", show_col_types = FALSE)
+
+# Exercise 6, Chunk 17: one row per directory entry
+lines <- pages %>%
+  separate_longer_delim(text, delim = "\n") %>%
+  rename(line = text) %>%
+  mutate(line = str_squish(line)) %>%
+  filter(line != "") %>%
+  mutate(line = str_remove(line, "^(([^A-Za-z0-9\\s.*]\\S*|\\S*[^A-Za-z0-9\\s.*]\\S*|[a-z](\\.[a-z])?|\\d)\\s)+(?=\\*?[A-Z][a-z'-]+ (Mrs\\. )?[A-Z].*\\b(res|rooms|bds)\\b)"))
+
+entries <- lines %>%
+  mutate(entry_id = cumsum(str_detect(line, "^\\*?\\s?[A-Z][a-z'-]+ (Mrs\\. )?[A-Z]"))) %>%
+  group_by(pagetitle, entry_id) %>%
+  summarize(entry = str_c(line, collapse = " "), .groups = "drop") %>%
+  mutate(entry = str_replace_all(entry, "-\\s", ""))
+
+name_pattern <- "^\\*?\\s?[A-Z][a-z'-]+(\\s(Mrs\\.|[A-Z][A-Za-z]*\\.?|jr\\.))*(\\s\\([^)]*\\))?,?"
+
+by_machine <- entries %>%
+  mutate(
+    asterisk   = str_detect(entry, "^\\*"),
+    name       = str_extract(entry, name_pattern) %>% str_remove("^\\*\\s?") %>% str_remove(",$") %>% str_squish(),
+    surname    = word(name, 1),
+    given      = str_remove(name, "^\\S+\\s?") %>% str_remove("\\s?\\(.*$"),
+    spouse     = str_match(name, "\\(([^)]+)\\)")[, 2],
+    rest       = str_remove(entry, name_pattern) %>% str_squish(),
+    occupation = str_extract(rest, "^(?!res\\b|rooms\\b|bds\\b)[a-z][^,]*?(?=,|\\s(res|rooms|bds)\\b|$)"),
+    housing    = str_match(entry, "\\b(res|rooms|bds)\\b")[, 2],
+    address    = str_match(entry, "\\b(?:res|rooms|bds)\\b\\.?,?\\s+(.+)$")[, 2]
+  ) %>%
+  select(pagetitle, entry_id, entry, asterisk, surname, given, spouse, occupation, housing, address)
+
+# Exercise 6, Chunk 19: clean the addresses
+addresses <- by_machine %>%
+  filter(!is.na(address)) %>%
+  mutate(
+    work_address = str_match(entry, "(\\d+\\S*\\s[^,]*?)\\.?,?\\s+(?:res|rooms|bds)\\b\\.?\\s+same\\b")[, 2],
+    address = if_else(str_detect(address, "^same\\b") & !is.na(work_address), work_address, address)
+  ) %>%
+  mutate(
+    clean = address %>%
+      str_remove_all("\\x{00AD}") %>%
+      str_replace_all("(?<=\\s)[^A-Za-z0-9\\s.\\x{00BD}]+(?=\\s)", "") %>% str_squish() %>%
+      str_replace_all("(?<=[a-z])-(?=[a-z])", "") %>%
+      str_replace_all("\\s+\\.", ".") %>%
+      str_replace_all("A\\.v\\b", "Av") %>%
+      str_remove("^[.\\s]+") %>%
+      str_replace("^(\\d+) (\\d+) (\\d+)(?=\\s)", "\\1\\2\\3") %>%
+      str_replace("^(\\d+) (\\d+)(?=\\s)", "\\1\\2"),
+    street = str_extract(clean, "^\\d+\\s?\\x{00BD}?\\s([NSEW]\\.?\\s)?[A-Z0-9][A-Za-z0-9]+(\\sAv\\b)?"),
+    street = street %>%
+      str_remove("\\s?\\x{00BD}") %>%
+      str_replace("\\b2d\\b", "2nd") %>%
+      str_replace("\\b3d\\b", "3rd") %>%
+      str_replace("\\sAv$", " Ave"),
+    street = if_else(str_detect(street, "Ave$"), street, str_c(street, " St"))
+  )
+
+# Exercise 6, Chunk 24: join the coordinates, keep the matches inside Muncie
+geocoded <- read_csv("data/muncie-1925-geocoded.csv", show_col_types = FALSE)
+
+residents <- addresses %>%
+  left_join(geocoded %>% select(street, lat, long, match_type), by = "street") %>%
+  filter(between(lat, 40.10, 40.30), between(long, -85.50, -85.25)) %>%
+  left_join(pages %>% select(pagetitle, pageptr), by = "pagetitle") %>%   # NEW: the scan's ID
+  select(pagetitle, pageptr, entry, asterisk, surname, given, occupation, housing,
+         address, street, match_type, lat, long)
+```
+
+```{r}
+# Chunk 3-A
+nrow(by_machine)   # entries in the directory sample
+```
+
+```{r}
+# Chunk 3-B
+nrow(residents)    # entries we can place on a map
+```
+
+```{r}
+# Chunk 3-C
+residents
+```
+
+------------------------------------------------------------------------
+
+## Part 2: Putting the points on the ground
+
+Right now `residents` is an ordinary table with two number columns, `lat` and `long`.
+
+`st_as_sf()` turns it into a **spatial** table: the two columns become a `geometry` column that R knows how to draw. The `crs` argument names the **coordinate reference system**, the rules for turning latitude and longitude into positions on a flat map. Code 4269 is the one the Census Bureau uses (NAD83), both in its geocoder and in its map layers, so everything lines up.
+
+```{r}
+# Chunk 4
+residents_sf <- residents %>%
+  st_as_sf(coords = c("long", "lat"), crs = 4269, remove = FALSE)
+
+residents_sf %>% select(surname, street)   # the geometry column always comes along
+```
+
+Now the **base layers**. The `tigris` package downloads the Census Bureau's **TIGER/Line** files: the map behind the geocoder you used in Exercise 6. We'll take four layers for Delaware County and cut them down to a rectangle around Muncie with `st_crop()`:
+
+- `roads()`: every street and road.
+- `linear_water()`: rivers and creeks, including the White River.
+- `rails()`: railroad lines (this one covers the whole country, so it's the slowest download).
+- `places()`: city limits. We keep Muncie's.
+
+Chunk 5 saves all four in one file, `output/exercise7/muncie_layers.gpkg` (a **GeoPackage**, a common file type for map layers), and reads that file on later runs, so you only download once.
+
+::: callout-warning
+## If the download doesn't work
+
+If Chunk 5 gives you an error (a slow connection or a Census server problem), run this line in your **console** and then run Chunk 5 again. It copies a version I downloaded using the same code:
+
+`file.copy("data/muncie-layers.gpkg", "output/exercise7/muncie_layers.gpkg")`
+:::
+
+```{r}
+#| message: false
+#| warning: false
+# Chunk 5
+layers_file <- "output/exercise7/muncie_layers.gpkg"
+
+# A rectangle around Muncie (longitude and latitude)
+window <- st_bbox(c(xmin = -85.45, ymin = 40.14, xmax = -85.33, ymax = 40.24), crs = st_crs(4269))
+
+if (!file.exists(layers_file)) {
+  roads <- roads("IN", "Delaware") %>% st_crop(window)
+  water <- linear_water("IN", "Delaware") %>% st_crop(window)
+  rails <- rails() %>% st_crop(window)
+  city  <- places("IN") %>% filter(NAME == "Muncie")
+
+  st_write(roads, layers_file, layer = "roads", quiet = TRUE)
+  st_write(water, layers_file, layer = "water", quiet = TRUE)
+  st_write(rails, layers_file, layer = "rails", quiet = TRUE)
+  st_write(city,  layers_file, layer = "city",  quiet = TRUE)
+}
+
+roads <- st_read(layers_file, layer = "roads", quiet = TRUE)
+water <- st_read(layers_file, layer = "water", quiet = TRUE)
+rails <- st_read(layers_file, layer = "rails", quiet = TRUE)
+city  <- st_read(layers_file, layer = "city",  quiet = TRUE)
+```
+
+A layer is a table too. Each row of `roads` is one stretch of road, `FULLNAME` is its name, and the last column holds its shape:
+
+```{r}
+# Chunk 6
+roads %>% select(FULLNAME) %>% head(10)
+```
+
+With `sf`, each layer is one `geom_sf()`, and ggplot stacks them in the order you write them: the first layer is drawn at the bottom. `coord_sf()` zooms in on the area where our residents lived.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 8
+# Chunk 7-A
+layers_map <- ggplot() +
+  geom_sf(data = city,  fill = "grey97", color = "grey60", linetype = "dashed") +
+  geom_sf(data = roads, color = "grey80", linewidth = 0.2) +
+  geom_sf(data = water, color = "steelblue", linewidth = 0.6) +
+  geom_sf(data = rails, color = "grey30", linewidth = 0.5) +
+  geom_sf(data = residents_sf, color = "#D55E00", size = 1.5, alpha = 0.8) +
+  coord_sf(xlim = c(-85.43, -85.34), ylim = c(40.15, 40.22)) +
+  labs(title = "Where did they live? Muncie, 1925",
+       subtitle = "Directory pages 200-214 (surnames Cu- to De-) on today's streets, river, railroads, and city limits",
+       caption = "Residents: Emerson's Muncie Directory, 1925-26, geocoded with the U.S. Census geocoder.\nLayers: U.S. Census Bureau TIGER/Line files (2020s).") +
+  theme_void()
+
+layers_map
+```
+
+```{r}
+# Chunk 7-B
+ggsave("output/exercise7/muncie_1925_layers.png", layers_map, width = 8, height = 8, bg = "white")
+```
+
+**Q1. Discuss with your partner:** imagineRio shows how Rio de Janeiro's streets, buildings, and shoreline changed over time, drawn from historical maps and views. What would it take to build that kind of map for Muncie in 1925? Using Knowles's chapter, name one thing a historian could do with that map in a GIS that we can't do with Chunk 7's map.
+
+> 
+
+------------------------------------------------------------------------
+
+## Part 3: Georeferencing Muncie, 1919
+
+Before we map the residents in different ways, we'll put a historical map under them. *Muncie, Indiana, 1919*, from the Digital Media Repository, is a scan: a picture made of pixels, with no coordinates. **Georeferencing** ties spots on the scan to places on the ground, so the picture can be laid on top of today's map.
+
+Everyone adds one **control point** in the Allmaps Editor:
+
+1.  Go to [editor.allmaps.org](https://editor.allmaps.org), paste this link, and click **Load**: `https://dmr.bsu.edu/iiif/info/HistMaps/257/manifest.json`
+2.  In the **Georeference** tab, find a street intersection in your assigned area of the map that still exists today.
+3.  Click it on the 1919 scan, then click the same corner on today's map. Add one point only, and don't move anyone else's.
+
+Allmaps shows everyone's points live, so the class builds one map together. The interactive map in Part 5 uses a version I georeferenced and saved in `data/muncie-1919-georeference.json`, so it doesn't change when the class map does. If you missed class, you don't need to add a point: read the steps above, and look at the 1919 layer in Part 4.
+
+------------------------------------------------------------------------
+
+## Part 4: Same people on three different maps
+
+A map is a visualization like any other: the same data can be drawn in ways that support different claims. To have something to compare, we'll group people by the **occupation** the directory printed.
+
+The directory lists over 100 different occupations, far too many for a map. So Chunk 8 sorts them into a few groups by looking for keywords. Every keyword list is a human-made decision.
+
+```{r}
+# Chunk 8-A
+factory_words <- "laborer|machin|molder|glass|foreman|watchman|assembler|bolt|core|cupola|finisher|helper|packer|sawyer|sorter|steel|fitter|tank|wire|zinc|wood|tinner|drill|heater|plaster|carpenter|painter|plumber|inspector|brakeman|paper"
+
+office_words  <- "clerk|sales|stenographer|bookkeeper|cashier|typist|manager|agent|auditor|timekeeper|telephone|registrar|secretary|teacher|physician|pastor|rector|engineer|druggist"
+
+residents_sf <- residents_sf %>%
+  mutate(work = case_when(
+    str_detect(occupation, "widow|vvidow|wi dow") ~ "Widow", 
+       # OCR also prints "vvidow"
+    str_detect(occupation, "student") ~ "Student",
+    str_detect(occupation, factory_words) ~ "Factory and trades",
+    str_detect(occupation, office_words) ~ "Office, sales, professions",
+    is.na(occupation) ~ "No occupation listed",
+    TRUE ~ "Other"
+  ))
+
+residents_sf %>%
+  st_drop_geometry() %>% # we only need the table here
+  count(work, sort = TRUE)
+```
+
+```{r}
+# Chunk 8-B
+residents_sf %>% 
+  st_drop_geometry() %>% 
+  count(work, occupation)
+```
+
+### Map 1: every person, visualized by group
+
+```{r}
+#| fig-width: 8
+#| fig-height: 7
+# Chunk 9-A
+all_residents <- ggplot() +
+  geom_sf(data = roads, color = "grey85", linewidth = 0.2) +
+  geom_sf(data = water, color = "steelblue", linewidth = 0.6) +
+  geom_sf(data = residents_sf, aes(color = work), size = 1.8, alpha = 0.8) +
+  scale_color_brewer(palette = "Dark2") +
+  coord_sf(xlim = c(-85.43, -85.34), ylim = c(40.15, 40.22)) +
+  labs(title = "Muncie, 1925: residents by occupation group", color = NULL) +
+  theme_void()
+
+all_residents
+```
+
+```{r}
+# Chunk 9-B
+ggsave("output/exercise7/muncie_1925_all-residents.png", all_residents, width = 10, height = 7, bg = "white")
+```
+
+### Map 2: small multiples
+
+Six colors on one map are hard to read. **Small multiples** give each group its own panel with `facet_wrap()` applied to the `work` column.
+
+We draw everyone in light grey in every panel first. Then, we draw each group on top in color. Every group is seen against the whole sample.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 7
+# Chunk 10-A
+small_multiples <- ggplot() +
+  geom_sf(data = roads, color = "grey90", linewidth = 0.2) +
+  geom_sf(data = residents_sf %>% select(-work), color = "grey75", size = 0.8) +   # everyone, every panel
+  geom_sf(data = residents_sf, aes(color = work), size = 1.6) +                      # one group per panel
+  facet_wrap(~ work, ncol = 3) +
+  scale_color_brewer(palette = "Dark2") +
+  coord_sf(xlim = c(-85.43, -85.34), ylim = c(40.15, 40.22)) +
+  labs(title = "Muncie, 1925: each occupation group against all residents in the sample") +
+  theme_void() +
+  theme(legend.position = "none")
+
+small_multiples
+```
+
+```{r}
+# Chunk 10-B
+ggsave("output/exercise7/muncie_1925_small_multiples.png", small_multiples, width = 10, height = 7, bg = "white")
+```
+
+### Map 3: density
+
+A **density** map stops showing people and shows *concentration* instead: a smooth surface that's darker where points are closer together. `stat_density_2d_filled()` works on plain longitude and latitude, so it uses the `residents` table instead of `residents_sf`.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 7
+# Chunk 11
+ggplot() +
+  stat_density_2d_filled(data = residents, aes(x = long, y = lat), alpha = 0.8) +
+  geom_sf(data = roads, color = "white", linewidth = 0.15) +
+  geom_sf(data = water, color = "steelblue", linewidth = 0.6) +
+  coord_sf(xlim = c(-85.43, -85.34), ylim = c(40.15, 40.22)) +
+  labs(title = "Muncie, 1925: where the sample is concentrated",
+       subtitle = "Lighter colors = more residents close together") +
+  theme_void() +
+  theme(legend.position = "none")   
+# the density numbers have no everyday meaning, so we hide them
+```
+
+------------------------------------------------------------------------
+
+## Part 5: An interactive map that leads back to the source
+
+A static map stops at the dot. An **interactive** map can let readers click the dot and read the source behind it. Chunk 12 writes a small **popup** for each person: their name, the full entry as the OCR printed it, the address we sent to the geocoder, and a link to the scanned page in the Digital Media Repository. `htmlEscape()` makes sure stray OCR symbols like `<` don't break the popup.
+
+```{r}
+# Chunk 12
+residents_map <- residents_sf %>%
+  st_drop_geometry() %>%
+  mutate(popup = str_glue(
+    "<b>{given} {surname}</b><br>",
+    "{htmltools::htmlEscape(entry)}<br><br>",
+    "Geocoded as: {street} ({match_type} match)<br>",
+    "<a href='https://dmr.bsu.edu/digital/collection/MunCityDirs/id/{pageptr}' target='_blank'>See the scanned page ({pagetitle})</a>"
+  ))
+```
+
+Now the map. Leaflet works like ggplot, one layer at a time, but connected with `%>%` instead of `+`. Inside leaflet functions, a `~` in front of a column name means "take this from the table", so `~long` is the `long` column.
+
+The map has two background layers you can switch on and off in the top-right corner: today's streets ("Today") and the 1919 city map, georeferenced in Allmaps ("Muncie, 1919").
+
+```{r}
+# Chunk 13-A
+work_colors <- colorFactor("Dark2", domain = residents_map$work)
+
+# The 1919 city map, georeferenced in Allmaps (read from the saved copy in our repository)
+map_1919 <- "https://allmaps.xyz/{z}/{x}/{y}.png?url=https://raw.githubusercontent.com/lukeave/HIST446-Worksheets/main/data/muncie-1919-georeference.json"
+
+muncie_leaflet <- leaflet(residents_map) %>%
+  addProviderTiles(providers$Esri.WorldGrayCanvas, group = "Today") %>%
+      # today's streets (Esri light gray)
+  addTiles(urlTemplate = map_1919, group = "Muncie, 1919",   
+      # the 1919 map on top of it
+           options = tileOptions(opacity = 0.8),
+           attribution = "Muncie, Indiana, 1919. Ball State University Libraries, DMR. Georeferenced with Allmaps.") %>%
+  addCircleMarkers(lng = ~long, lat = ~lat,
+                   radius = 5, stroke = FALSE, fillOpacity = 0.8,
+                   color = ~work_colors(work),
+                   popup = ~popup) %>%
+  addLegend(pal = work_colors, values = ~work, title = "Occupation group") %>%
+  addLayersControl(baseGroups = "Today", overlayGroups = "Muncie, 1919")  # switch the 1919 map on and off
+
+muncie_leaflet
+```
+
+```{r}
+# Chunk 13-B
+htmlwidgets::saveWidget(muncie_leaflet, "output/exercise7/muncie_1925_map.html")
+unlink("output/exercise7/muncie_1925_map_files", recursive = TRUE)   # tidy up a helper folder saveWidget leaves behind
+```
+
+------------------------------------------------------------------------
+
+## Part 6: Your project
+
+Over the last five exercises you've seen five kinds of visualizations: charts from tables (E2, E4), word frequencies and distinctive words (E5), topics over time (E5), place names counted from text (E6), and points on a map (E6, E7). The **Method Selection & Revised Question** assignment is due Monday, November 16, and your first **Data Visualization & Preliminary Analysis** is due a week later. Use this part to start planning one visualization for your own project.
+
+**Q2.** Answer each part in one or two sentences:
+
+1.  **Source and row.** What is your main source, and what will one row of your data be (a person, a document, a page, a place, an event)?
+
+> 
+
+2.  **Method.** Which method from E2–E7 fits your question best, and why? (If none fits, say what's missing.)
+
+> 
+
+3.  **The visualization.** Describe one chart or map you could make: what goes on the x and y axes (or where on the map), and what color, size, or panels show.
+
+> 
+
+4.  **What it hides.** What will this visualization leave out?
+
+> 
+
+5.  **What's left to do.** What has to happen to your data before you can visualize it (transcribing, cleaning, coding categories, geocoding)? Can you do it by November 23? If not, what smaller version could you make?
+
+> 
+
+------------------------------------------------------------------------
+
+## Save, Commit, Push
+
+Render this file. Rendering re-uses the layers saved in `output/exercise7/`, so it only takes a minute, but it needs an internet connection to show the interactive map's background and the 1919 map. Then, in GitHub Desktop, commit this file, the `.html`, and the `output/exercise7/` folder with a message like "Exercise 7: mapping Muncie," and **Push origin**.
+
+::: callout-tip
+## Sources
+
+- *Emerson's Muncie Directory, 1925–26* (Cincinnati: Williams Directory Company), pages 200–214, Ball State University Digital Media Repository.
+- Richard White, "What Is Spatial History?," Spatial History Lab, Stanford University, February 1, 2010.
+- Anne Kelly Knowles, "GIS and History," in *Placing History: How Maps, Spatial Data, and GIS Are Changing Historical Scholarship*, ed. Anne Kelly Knowles (Redlands, CA: ESRI Press, 2008).
+- *ImagineRio*, Spatial Studies Lab, Rice University.
+- *Muncie, Indiana, 1919* (City of Muncie; B. F. Deardorff and F. M. Spiegel; C. A. Penzel, publisher), Ball State University Libraries, Digital Media Repository. Georeferenced with Allmaps (allmaps.org).
+- U.S. Census Bureau, TIGER/Line Shapefiles, through the R package `tigris` by Kyle Walker.
+- Edzer Pebesma, `sf`: Simple Features for R.
+- `leaflet` for R (Posit), using the Leaflet JavaScript library. Background map: Esri World Light Gray Canvas (© Esri and its data providers).
+- U.S. Census Bureau Geocoder, through the R package `tidygeocoder` (Exercise 6).
+:::
