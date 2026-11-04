@@ -1,8 +1,8 @@
 ---
 title: "Exercise 7: Mapping Muncie, 1925"
 subtitle: "Base layers, small multiples, and interactive maps in R"
-author: ""
-date: ""
+author: "Aaron Tanglertpaibul"
+date: "11/4/2026"
 format:
   html:
     theme: cosmo
@@ -216,14 +216,14 @@ rails <- st_read(layers_file, layer = "rails", quiet = TRUE)
 city  <- st_read(layers_file, layer = "city",  quiet = TRUE)
 ```
 
-A layer is a table too. Each row of `roads` is one stretch of road, `FULLNAME` is its name, and the last column holds its shape:
+A layer is a table too. Each row of `roads` is one stretch of road, `FULLNAME` is its name, and the last column holds its shape: the roads are now a feature
 
 ```{r}
 # Chunk 6
 roads %>% select(FULLNAME) %>% head(10)
 ```
 
-With `sf`, each layer is one `geom_sf()`, and ggplot stacks them in the order you write them: the first layer is drawn at the bottom. `coord_sf()` zooms in on the area where our residents lived.
+With `sf`, each layer is one `geom_sf()`, and ggplot stacks them in the order you write them: the first layer is drawn at the bottom. `coord_sf()` zooms in on the area where our residents lived. puts points on the ground instead of them floating
 
 ```{r}
 #| fig-width: 8
@@ -251,7 +251,7 @@ ggsave("output/exercise7/muncie_1925_layers.png", layers_map, width = 8, height 
 
 **Q1. Discuss with your partner:** imagineRio shows how Rio de Janeiro's streets, buildings, and shoreline changed over time, drawn from historical maps and views. What would it take to build that kind of map for Muncie in 1925? Using Knowles's chapter, name one thing a historian could do with that map in a GIS that we can't do with Chunk 7's map.
 
-> 
+> Not best approch due to using modern map to geographically place people of the past, maps as bad graphs. the map as a qmd would be embedded in the same file. White says map as research tools not an argument, makes one ask questions. Dont find answers but ask questions. What it would take to create an imagine rio but for muncie it would take multiple maps and photographs and angle to overlay the past over the present in multiple layers, The IDILabs has 3d models of buildings and a virtual tour, lacking the time layer.
 
 ------------------------------------------------------------------------
 
@@ -430,6 +430,8 @@ unlink("output/exercise7/muncie_1925_map_files", recursive = TRUE)   # tidy up a
 
 ------------------------------------------------------------------------
 
+can ask question , did muncie urban growth grow around the factories?
+
 ## Part 6: Your project
 
 Over the last five exercises you've seen five kinds of visualizations: charts from tables (E2, E4), word frequencies and distinctive words (E5), topics over time (E5), place names counted from text (E6), and points on a map (E6, E7). The **Method Selection & Revised Question** assignment is due Monday, November 16, and your first **Data Visualization & Preliminary Analysis** is due a week later. Use this part to start planning one visualization for your own project.
@@ -438,23 +440,27 @@ Over the last five exercises you've seen five kinds of visualizations: charts fr
 
 1.  **Source and row.** What is your main source, and what will one row of your data be (a person, a document, a page, a place, an event)?
 
-> 
+> My main source is museum photos with location data. one row of data can be location or exhibit location. another rows can be museum name, exhibit floor name, person who made exhibit, text from exhibit, donor/funder, language
 
 2.  **Method.** Which method from E2–E7 fits your question best, and why? (If none fits, say what's missing.)
 
-> 
+> Topic modeling or text analysis can utilize the text data, and see what topics get translated into english or not. while mapping can help visualize any relationships between museums, exhibit authors, and donors/funders, and if I can find internal maps of mueums then I can see which displays contain english or not.
 
 3.  **The visualization.** Describe one chart or map you could make: what goes on the x and y axes (or where on the map), and what color, size, or panels show.
 
-> 
+> A possible map could be about the spatial analysis of each exhibit topics and see how concentrated mentions of violence are in each museum and how they compare across different museums.
+>
+> A possible graph can be what tropes each museums use and how many words associated with violence, memorilizaing, mourning, etc.
 
 4.  **What it hides.** What will this visualization leave out?
 
-> 
+> What gets left out is the relationship between the exhibit authors and donators and the mandate given by the exhibit creator and donors
 
 5.  **What's left to do.** What has to happen to your data before you can visualize it (transcribing, cleaning, coding categories, geocoding)? Can you do it by November 23? If not, what smaller version could you make?
 
-> 
+> My data needs to be ocrs as not all pictures have apple ocr on them, the text needs to be translated, a table documenting donors and exhibit creators needs to be made, topic modeling done on the text, the table map needs to be made.
+>
+> I dont think I can do it by the 23rd, I can probably do a topic modeling on 3 museums and only on related exhibits, so not the full thing
 
 ------------------------------------------------------------------------
 
