@@ -1,8 +1,8 @@
 ---
 title: "Exercise 8: Final Project Lab"
 subtitle: "Exploring your own project data with this semester's methods"
-author: ""
-date: ""
+author: "Aaron Tanglertpaibul"
+date: "11/16/2026"
 format:
   html:
     theme: cosmo
@@ -17,6 +17,25 @@ format:
 
 ::: {.callout-note}
 ## What is this exercise?
+what makes a visualization evidence for an arguement or just noise. honest decisions in visulaizations to make sound arguments.
+truncated axis, where the bar start is the data normalized? 
+dual axis; are the two scales making two lines lok linked?
+cherry picked time frame
+counts instead of rates
+area and 3d 
+lumped categories
+
+title should make a claim, an argument. deliberite violcne, exhibiting violence, memorializing violence, 
+baseline and scale
+counts or rates
+ time frame
+ 
+ note research question
+ where the text came from
+ method and reason for choicing it
+ what is incoded, color size position
+ the claim the figure supports
+ what a skeptic would say
 
 Exercises 2 through 7 each gave you a method and a dataset I chose. This one gives you **no new method and no dataset**. You bring your own project data, and you try this semester's methods on it.
 
@@ -109,19 +128,19 @@ These are the only lines you need to change for Parts 1–3. `my_folder` is your
 
 ```{r}
 # Chunk 2
-my_folder <- "data/REPLACE-ME"        # your folder: "data/" and your last name, e.g. "data/anglin"
-my_file   <- "REPLACE-ME.csv"         # your file in that folder, e.g. "sc-ads.csv": a .csv or .xlsx file, a folder of .txt files, or an IPUMS .xml codebook
+my_folder <- "data/Tanglertpaibul"        # your folder: "data/" and your last name, e.g. "data/anglin"
+my_file   <- "metadata_ocr.csv"         # your file in that folder, e.g. "sc-ads.csv": a .csv or .xlsx file, a folder of .txt files, or an IPUMS .xml codebook
 my_data_path <- file.path(my_folder, my_file)
 
-category_column <- "REPLACE-ME"   # a column of categories (a type, a newspaper, a state, an occupation)
-date_column     <- "REPLACE-ME"   # a column with dates or years
-number_column   <- "REPLACE-ME"   # a column of numbers (an age, a price, a count)
+category_column <- "filename"   # a column of categories (a type, a newspaper, a state, an occupation)
+date_column     <- "DateTimeOriginal"   # a column with dates or years
+number_column   <- "text"   # a column of numbers (an age, a price, a count)
 
 # TRUE/FALSE switches the chunks below use to decide whether to run
 has_data     <- file.exists(my_data_path) || dir.exists(my_data_path)
-has_category <- has_data && category_column != "REPLACE-ME"
-has_date     <- has_data && date_column != "REPLACE-ME"
-has_number   <- has_data && number_column != "REPLACE-ME"
+has_category <- has_data && category_column != "filename"
+has_date     <- has_data && date_column != "DateTimeOriginal"
+has_number   <- has_data && number_column != "text"
 
 has_data
 ```
@@ -162,7 +181,7 @@ my_data
 
 **Q2.** Did R read your data the way you expected? Look at the column names and the first few rows. If something looks wrong (a header in the wrong row, an extra empty column, strange characters), describe it.
 
->
+>the text is very mangled from 
 
 ------------------------------------------------------------------------
 
