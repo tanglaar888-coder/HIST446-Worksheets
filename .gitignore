@@ -60,3 +60,19 @@ __MACOSX/
 
 # Answer keys -- instructor only, never pushed
 *-KEY.*
+
+
+# ---------------------------------------------------------------------------
+# Student project data (E8 and after)
+# Each student keeps their project data in data/<lastname>/. Git ignores
+# every folder inside data/, so none of it can be pushed. Course files that
+# sit directly in data/ (not in a folder) are unaffected.
+# To share a new course folder inside data/ later, add a line below this
+# block, e.g.:  !/data/new-folder/
+# ---------------------------------------------------------------------------
+/data/*/
+
+# In case a student drops project files directly into data/
+/data/*.xlsx
+/data/*.xml
+/data/*.dat.gz

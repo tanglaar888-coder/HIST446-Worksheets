@@ -614,6 +614,7 @@ residents %>%
   select(entry, address, street) %>%
   write_csv("output/exercise6/unmatched.csv")
 ```
+
 **Q11.** The map has no streets, river, or rail lines. What would you need to add before it could say anything about 1925 Muncie? Then go back to your answer to the last question of Exercise 1. Now that you've actually mapped the asterisk, what should a responsible version of this map include or explain before anyone sees it?
 
 > 

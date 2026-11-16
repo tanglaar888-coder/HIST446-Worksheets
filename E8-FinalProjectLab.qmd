@@ -1,0 +1,870 @@
+---
+title: "Exercise 8: Final Project Lab"
+subtitle: "Exploring your own project data with this semester's methods"
+author: ""
+date: ""
+format:
+  html:
+    theme: cosmo
+    highlight-style: dracula
+    code-overflow: wrap
+    css: assets/styles.css
+    df-print: paged
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+---
+
+::: {.callout-note}
+## What is this exercise?
+
+Exercises 2 through 7 each gave you a method and a dataset I chose. This one gives you **no new method and no dataset**. You bring your own project data, and you try this semester's methods on it.
+
+Every part reuses code you've already run, with the dataset-specific details replaced by **settings** you fill in. You don't need to write new code from scratch; you need to decide what each setting should be for *your* sources, and to notice when a method doesn't fit them.
+
+- **Parts 1–3 are for everyone:** point this file at your data, check it with Peng's EDA checklist, and make a few basic charts.
+- **Part 4 is for everyone too:** turn one chart into an argument, the way Chambers does, and let a partner test it with Yau's questions.
+- **Then choose at least one of Parts A–D** (Part 5 explains which kind of data each one needs):
+  - **A. Distinctive words (tf-idf).** For text: which words set one group of your documents apart from the others? (E5)
+  - **B. Topic modeling.** For text: which groups of words tend to appear together? (E5)
+  - **C. Named entity recognition (NER).** For text: which people, places, and organizations does it name? (E6)
+  - **D. Mapping.** For data with places: where are your records? (E6, E7)
+
+Pick the part(s) that fit your question, not the ones that look easiest. Whatever you make here is a draft of your **Data Visualization & Preliminary Analysis**, due November 23.
+
+As before, you're graded on your documented effort, not on mastery. Finish at home before Thanksgiving Break, and commit your own work.
+:::
+
+::: {.callout-tip}
+## Today in class: work in pairs
+
+Pair up with someone whose project is **different** from yours. You each run your own file on your own laptop, side by side.
+
+1. **Part 1 (5 minutes).** Tell your partner your answers to Q1: your question, your source, and what one row of your data is. Your partner should be able to say them back to you.
+2. **Parts 2–3 (20 minutes).** Load and explore your data. When a number or a chart surprises you, show your partner, and ask whether it surprises them too.
+3. **Part 4 (10 minutes).** Make your argument chart.
+4. **Swap (10 minutes).** Trade laptops. Your partner answers Q7 in **your** file, and you answer it in theirs. Trade back and answer Q8.
+5. **Share (5 minutes).** A few pairs show one chart to the class: its claim, and the hardest question the partner asked.
+
+Parts 5, A–D, and 6 are for home.
+:::
+
+## Setup
+
+Every package below was installed for an earlier exercise. If R says it can't find one, run `install.packages("name")` in your **console**.
+
+```{r}
+#| message: false
+# Chunk 1
+library(tidyverse)
+library(tidytext)   # unnest_tokens(), stop_words, bind_tf_idf()
+
+dir.create("output/exercise8", recursive = TRUE, showWarnings = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Part 1: Your question and your data
+
+**Q1.** Answer each in one or two sentences:
+
+1. What is your research question, as it stands today?
+
+>
+
+2. What is your main source, and where did your data come from?
+
+>
+
+3. What is **one row** of your data: a person, a document, a page, an article, an event, a place?
+
+>
+
+### Where your data is
+
+Your data goes in **your own folder inside this repository's `data/` folder**, named with your last name in lower case: `data/anglin/`, `data/cole/`, and so on. If you have a workspace, I gave you the file(s) for today: put them straight in your folder. If you don't, make your folder and put your data in it. It can be a table (a `.csv` or Excel `.xlsx` file, one row per record) or a folder of text files (one `.txt` file per document: a newspaper page, a letter, a catalog section).
+
+| Workspace | Your file (in your `data/` folder) | One row is | Settings to try |
+|---|---|---|---|
+| Anglin | `sc-ads.csv` | an ad | category `passing_group` or `newspaper`; date `publication_date`; text `transcription`, grouped by `decade` |
+| Cole | `proceedings-pages.csv` | a page of the *Proceedings* | category `month`; date `date`; number `share_digits`; text `clean_text`, grouped by `month` |
+| Huneryager | `courses.csv` | a course in one catalog | category `department`; date `catalog_year`; text `description`, grouped by `catalog_year` |
+| Huneryager | `issues.csv` | an issue of the *Daily News* | text `headlines`; doc `pointer` |
+| Matney | `pages.csv` | a newspaper page | category `event`, `newspaper_title`, or `state`; date `date`; text `snippet`, grouped by `event`; place `place` |
+| Rojas | your `.xml` file (keep the `.dat.gz` file beside it) | a person in one census | category `occ1950` or `bpl`; date `year`; number `age` |
+| Tan | `incidents.csv` | an incident you coded | category `incident_type`; date `incident_date`; number `people_involved`; text `headline`; place `place_text` |
+| Tanglertpaibul | `metadata_ocr.csv` | a photo of a panel | date `DateTimeOriginal`; text `text`; coordinates `GPSLatitude` and `GPSLongitude` |
+
+If you've only coded a few records so far (Tan), that's fine for today: the point is to check that everything runs, and to see what your data will be able to show. Tanglertpaibul: your file has no column of categories yet. Open it in Excel, add a `museum` column, and use the coordinates to fill it in for your 25 photos. That gives you a category for Parts 3 and 4.
+
+::: {.callout-warning}
+## Your data stays off GitHub
+
+Your repositories are public, and project data often can't be shared: Freedom on the Move, IPUMS, copyrighted text, records about living people. This repository's `.gitignore` file tells Git to ignore every folder inside `data/`, so nothing in your folder can be committed. That only works if your data is **in a folder**: don't put files directly in `data/`. Your charts and counts in `output/exercise8/` **will** be committed, so check them before you push.
+:::
+
+### Your settings
+
+These are the only lines you need to change for Parts 1–3. `my_folder` is your folder; `my_file` is the file inside it, as the table above shows it. Replace each other `"REPLACE-ME"` with the name of a column in your data. Leave a setting as `"REPLACE-ME"` if your data doesn't have that kind of column, and the chunks that need it will skip themselves.
+
+```{r}
+# Chunk 2
+my_folder <- "data/REPLACE-ME"        # your folder: "data/" and your last name, e.g. "data/anglin"
+my_file   <- "REPLACE-ME.csv"         # your file in that folder, e.g. "sc-ads.csv": a .csv or .xlsx file, a folder of .txt files, or an IPUMS .xml codebook
+my_data_path <- file.path(my_folder, my_file)
+
+category_column <- "REPLACE-ME"   # a column of categories (a type, a newspaper, a state, an occupation)
+date_column     <- "REPLACE-ME"   # a column with dates or years
+number_column   <- "REPLACE-ME"   # a column of numbers (an age, a price, a count)
+
+# TRUE/FALSE switches the chunks below use to decide whether to run
+has_data     <- file.exists(my_data_path) || dir.exists(my_data_path)
+has_category <- has_data && category_column != "REPLACE-ME"
+has_date     <- has_data && date_column != "REPLACE-ME"
+has_number   <- has_data && number_column != "REPLACE-ME"
+
+has_data
+```
+
+`has_data` should say `TRUE`. If it says `FALSE`, run `my_data_path` in the Console and check the path: it starts from this repository's folder, and capitalization matters. In RStudio's **Files** pane, you can find your file and compare its name letter by letter.
+
+------------------------------------------------------------------------
+
+## Part 2: Read in your data
+
+Chunk 3 looks at what kind of path you gave it and reads it the right way. A folder of text files becomes a table with one row per file: `doc_id` (the file name) and `text`. An IPUMS extract is read with `ipumsr`, as in your workspace, and its numbered codes become their labels ("Farmers (owners and tenants)" instead of `100`), except `year` and `age`, which stay numbers.
+
+```{r}
+#| eval: !expr has_data
+# Chunk 3
+if (dir.exists(my_data_path)) {
+  # a folder of .txt files: one row per file
+  text_files <- list.files(my_data_path, pattern = "\\.txt$", full.names = TRUE)
+  my_data <- tibble(doc_id = character(), text = character())
+  for (file in text_files) {
+    my_data <- bind_rows(my_data, tibble(doc_id = basename(file), text = read_file(file)))
+  }
+} else if (str_detect(my_data_path, "\\.xml$")) {
+  # an IPUMS extract: the .xml codebook, with its .dat.gz file beside it
+  library(ipumsr)
+  my_data <- read_ipums_micro(my_data_path, verbose = FALSE) %>%
+    rename_with(str_to_lower) %>%
+    mutate(across(any_of(c("year", "age")), as.numeric)) %>%        # these stay numbers
+    mutate(across(where(haven::is.labelled), haven::as_factor))      # codes -> their labels
+} else if (str_detect(my_data_path, "\\.xlsx?$")) {
+  my_data <- readxl::read_excel(my_data_path)
+} else {
+  my_data <- read_csv(my_data_path, show_col_types = FALSE)
+}
+
+my_data
+```
+
+**Q2.** Did R read your data the way you expected? Look at the column names and the first few rows. If something looks wrong (a header in the wrong row, an extra empty column, strange characters), describe it.
+
+>
+
+------------------------------------------------------------------------
+
+## Part 3: Explore your data
+
+This part follows Peng's checklist from Exercise 4, in a shorter form.
+
+### Check the packaging
+
+> **Peng:** Before opening the wrapped "present," shake the box: how many rows and columns are there? And do they match what you expected? ([Peng, "Check the packaging"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#check-the-packaging))
+
+```{r}
+#| eval: !expr has_data
+# Chunk 4
+nrow(my_data)
+ncol(my_data)
+```
+
+### Run `str()`, and look at the top and the bottom
+
+> **Peng:** `str()` shows the class of every column. Make sure numbers are numbers, dates are dates, and text is text. ([Peng, "Run str()"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#run-str))
+
+```{r}
+#| eval: !expr has_data
+# Chunk 5
+str(my_data)
+head(my_data)
+tail(my_data)
+```
+
+### How full is each column?
+
+Exercise 3 showed that "empty" can mean different things. This chunk counts the share of missing values (`NA`) in each column. If your data uses another way of saying "nothing here" (a dash, "unknown," `-9`), add it to `empty_values`.
+
+```{r}
+#| eval: !expr has_data
+# Chunk 6
+empty_values <- c("", "NA", "unknown", "-9")
+
+my_data %>%
+  mutate(across(everything(), as.character)) %>%
+  pivot_longer(everything(), names_to = "column", values_to = "value") %>%
+  mutate(empty = is.na(value) | value %in% empty_values) %>%
+  group_by(column) %>%
+  summarize(percent_empty = round(100 * mean(empty), 1)) %>%
+  arrange(desc(percent_empty))
+```
+
+### Check your "n"s
+
+> **Peng:** Count things, and compare the counts with *landmarks*: numbers you know should be true. If you expect 1,000 people and find 20, something's wrong. ([Peng, "Check your 'n's"](https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html#check-your-ns))
+
+```{r}
+#| eval: !expr has_category
+# Chunk 7
+my_data %>% count(.data[[category_column]], sort = TRUE)
+```
+
+(`.data[[category_column]]` means "the column whose name is stored in `category_column`." It lets the same code work for any column you name in your settings.)
+
+**Q3.** Name one **landmark**: a number you know from outside your data (from your sources, your Close Reading, or a secondary source) that your data should match. Does it?
+
+>
+
+### Basic exploratory charts
+
+Each chart below uses one of your settings, and skips itself if you left that setting as `"REPLACE-ME"`.
+
+**Categories:** the 15 most common values in your category column.
+
+```{r}
+#| eval: !expr has_category
+#| fig-width: 8
+#| fig-height: 5
+# Chunk 8
+my_data %>%
+  count(.data[[category_column]], name = "records") %>%
+  slice_max(records, n = 15, with_ties = FALSE) %>%
+  ggplot(aes(x = records, y = reorder(.data[[category_column]], records))) +
+  geom_col(fill = "grey40") +
+  labs(title = str_glue("Records by {category_column}"), x = "Records", y = NULL) +
+  theme_minimal()
+
+ggsave("output/exercise8/categories.png", width = 8, height = 5, bg = "white")
+```
+
+**Time:** records per year. `str_extract()` pulls the first four-digit number out of your date column, so this works whether your dates look like `1959-10-15`, `October 15, 1959`, or `1959`.
+
+```{r}
+#| eval: !expr has_date
+#| fig-width: 8
+#| fig-height: 4
+# Chunk 9
+by_year <- my_data %>%
+  mutate(year = as.numeric(str_extract(as.character(.data[[date_column]]), "\\d{4}"))) %>%
+  count(year, name = "records")
+
+by_year %>% filter(is.na(year))   # rows whose date had no year in it
+
+by_year %>%
+  filter(!is.na(year)) %>%
+  ggplot(aes(x = year, y = records)) +
+  geom_col(fill = "grey40") +
+  labs(title = "Records per year", x = NULL, y = "Records") +
+  theme_minimal()
+
+ggsave("output/exercise8/records-per-year.png", width = 8, height = 4, bg = "white")
+```
+
+**Numbers:** the distribution of your number column.
+
+```{r}
+#| eval: !expr has_number
+#| fig-width: 8
+#| fig-height: 4
+# Chunk 10
+my_numbers <- my_data %>%
+  mutate(value = as.numeric(.data[[number_column]]))
+
+summary(my_numbers$value)
+
+ggplot(my_numbers, aes(x = value)) +
+  geom_histogram(bins = 30, fill = "grey40") +
+  labs(title = str_glue("Distribution of {number_column}"), x = number_column, y = "Records") +
+  theme_minimal()
+```
+
+If `summary()` shows many `NA's`, some values in that column aren't numbers ("about 20," "unknown"). Find them with `my_numbers %>% filter(is.na(value))`.
+
+**Q4.** Look at your charts. What surprised you? Which chart would you want to improve for your Data Visualization assignment, and how?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 4: Make a chart that argues
+
+Chambers's title is a claim, "The Gun Problem We Don't Mention," and every chart under it is there to support it. Yau shows the other side: how the way a chart is drawn can push a reader toward a conclusion the data doesn't support. In this part you do both. Make one chart whose **title states a claim** about your sources, then let a partner test whether the chart earns it.
+
+**Q5.** Write your claim as one sentence: something about your research question that your data might show. It doesn't have to be true yet. That's what the chart is for.
+
+>
+
+Fill in the settings in Chunk 11:
+
+- `claim_title` is your sentence from Q5.
+- `measure` is `"count"` (how many records) or `"percent"` (each category's share of the records in that year, or in that panel). Percentages let you compare years or groups of different sizes; counts show how much there is.
+- `over_time` is `TRUE` for one line per category across the years (it needs your `date_column`), or `FALSE` for bars.
+- `top_n` is how many categories to show. The rest are lumped into "Other."
+- `source_note` goes at the bottom of the chart. Every published chart should say where its data comes from.
+
+Two settings are optional:
+
+- `panel_column` splits the chart into small charts, one for each value of that column (an event, a museum, a newspaper), so you can compare them side by side.
+- `search_column` and `search_words` make a category for you, if your data is mostly text: each record either mentions your words or it doesn't. Separate words with `|`, which means "or": `"insane|lunatic"`. Capitalization doesn't matter. When you set these, the chart uses them instead of your `category_column`.
+
+Some settings to try, by workspace. They're a place to start, not the answer: your claim decides the chart.
+
+| Workspace | Settings to try |
+|---|---|
+| Anglin | `passing_group` over time; or search `transcription` for your own words |
+| Cole | search `clean_text` for words from your word lists, over time |
+| Huneryager | search `description` for a region's names, over time (`catalog_year`) |
+| Matney | `event` with `over_time <- FALSE` and `measure <- "count"`; or search `snippet` for your own words |
+| Rojas | `occ1950` over time; or search `occ1950` for `"laborer"` |
+| Tan | `incident_type` over time |
+| Tanglertpaibul | `museum`, once you've added it, with `over_time <- FALSE` and `measure <- "count"` |
+
+```{r}
+# Chunk 11
+claim_title <- "REPLACE-ME"   # your claim from Q5
+measure     <- "percent"      # "count" or "percent"
+over_time   <- TRUE           # TRUE: lines across the years (needs a date_column); FALSE: bars
+top_n       <- 5              # how many categories to show; the rest become "Other"
+source_note <- "REPLACE-ME"   # e.g. "Source: Freedom on the Move, South Carolina ads, 1732-1865"
+
+# optional
+panel_column  <- "REPLACE-ME"   # one small chart for each value of this column
+search_column <- "REPLACE-ME"   # a column of text to search...
+search_words  <- "REPLACE-ME"   # ...for these words, e.g. "insane|lunatic"
+
+# switches for Chunk 12
+has_search <- has_data && search_column != "REPLACE-ME" && search_words != "REPLACE-ME"
+has_panel  <- has_data && panel_column != "REPLACE-ME"
+use_years  <- has_date && over_time
+has_claim  <- (has_category || has_search) && claim_title != "REPLACE-ME"
+```
+
+Chunk 12 draws the chart and saves it as `output/exercise8/argument-chart.png`. If you chose `over_time`, it also tells you how many records have no year, and so are **not** in the chart. Keep that number: your partner will ask about it.
+
+```{r}
+#| eval: !expr has_claim
+#| fig-width: 9
+#| fig-height: 5
+# Chunk 12
+measure_label <- if (measure == "percent") "Percent of records" else "Records"
+
+# 1. Give every record a category
+if (has_search) {
+  argument_data <- my_data %>%
+    mutate(mentions = str_detect(.data[[search_column]], regex(search_words, ignore_case = TRUE)),
+           category = if_else(mentions %in% TRUE,
+                              str_glue("Mentions {search_words}"),
+                              str_glue("Doesn't mention {search_words}")))
+  category_name <- str_glue("whether {search_column} mentions {search_words}")
+} else {
+  argument_data <- my_data %>%
+    mutate(category = as.character(.data[[category_column]]),
+           category = if_else(is.na(category) | category == "", "(empty)", category),
+           category = fct_lump_n(category, n = top_n, other_level = "Other"))   # the top_n, and "Other"
+  category_name <- category_column
+}
+
+# 2. Give every record a panel ("all" if you didn't choose a panel_column)
+if (has_panel) {
+  argument_data <- argument_data %>% mutate(panel = as.character(.data[[panel_column]]))
+} else {
+  argument_data <- argument_data %>% mutate(panel = "all")
+}
+
+# 3. Count
+if (use_years) {
+  plot_data <- argument_data %>%
+    mutate(year = as.numeric(str_extract(as.character(.data[[date_column]]), "\\d{4}"))) %>%
+    filter(!is.na(year)) %>%
+    count(panel, year, category) %>%
+    group_by(panel, year) %>%
+    mutate(value = if (measure == "percent") 100 * n / sum(n) else n) %>%   # share of that year's records
+    ungroup()
+} else {
+  plot_data <- argument_data %>%
+    count(panel, category) %>%
+    group_by(panel) %>%
+    mutate(value = if (measure == "percent") 100 * n / sum(n) else n) %>%   # share of that panel's records
+    ungroup()
+}
+n_in_chart <- sum(plot_data$n)
+
+# with search words and percentages, "doesn't mention" is just 100 minus "mentions", so we drop it
+if (has_search && measure == "percent") {
+  plot_data <- plot_data %>% filter(str_detect(category, "^Mentions"))
+}
+
+# 4. Draw
+if (use_years) {
+  # one line per category, across the years
+  year_breaks <- pretty(plot_data$year)
+  year_breaks <- year_breaks[year_breaks == round(year_breaks)]   # whole years only
+
+  argument_chart <- ggplot(plot_data, aes(x = year, y = value, color = category)) +
+    geom_line() +
+    geom_point(size = 1) +
+    scale_x_continuous(breaks = year_breaks) +
+    labs(x = NULL, y = measure_label, color = NULL)
+} else {
+  # one bar per category
+  argument_chart <- ggplot(plot_data, aes(x = value, y = reorder(category, value))) +
+    geom_col(fill = "grey40") +
+    labs(x = measure_label, y = NULL)
+}
+
+if (has_panel) {
+  argument_chart <- argument_chart + facet_wrap(vars(panel))
+}
+
+argument_chart <- argument_chart +
+  labs(title    = claim_title,
+       subtitle = str_glue("{measure_label}, by {category_name} (n = {format(n_in_chart, big.mark = ',')} records)"),
+       caption  = if (source_note != "REPLACE-ME") source_note else NULL) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+ggsave("output/exercise8/argument-chart.png", argument_chart, width = 9, height = 5, bg = "white")
+
+if (use_years) {
+  cat(nrow(my_data) - n_in_chart, "of your", nrow(my_data), "records have no year, so they aren't in this chart.\n")
+}
+argument_chart
+```
+
+**Q6.** Does the chart support your claim? If it doesn't, what does it show instead? Don't fix it yet: your partner gets to see it first.
+
+>
+
+### Swap with your partner
+
+Trade laptops. Look at your partner's chart **before** you read their code or their answers, and answer Q7 here, in their file. The questions borrow from Yau's "Defense Against Dishonest Charts."
+
+**Q7 (written by your partner).** Your name:
+
+1. Read only the title. What did you expect the chart to show? Does it show that?
+2. Is it showing counts or percentages? Would the other one tell the same story? (Change `measure` in Chunk 11 and run Chunks 11 and 12 again to find out.)
+3. What isn't in the chart, or is barely there: records with no year (Chunk 12 prints how many), the categories lumped into "Other," years with only a few records, years with no records that a line draws straight across? Is any of that big enough to change the story?
+4. Look at the axes. Does an axis that doesn't start at zero, or a stretched time range, make a difference look bigger or smaller than it is?
+5. What's one question a skeptical reader would ask that this chart can't answer yet?
+
+>
+
+**Q8.** Trade back. What will you change in your chart, your claim, or your data because of what your partner wrote?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 5: Choose your method(s)
+
+| Part | Method | What your data needs | From |
+|---|---|---|---|
+| A | Distinctive words (tf-idf) | A text column, and a column that splits documents into groups (years, decades, newspapers) | E5 |
+| B | Topic modeling | A text column with **many** documents (at least 50 or so, after chunking) | E5 |
+| C | Named entity recognition | A text column in English, with names in it | E6 |
+| D | Mapping | A column with coordinates, addresses, or place names | E6, E7 |
+
+Turn on the part(s) you choose by changing `FALSE` to `TRUE` below, and fill in the settings. Parts A–C share the text settings.
+
+```{r}
+# Chunk 13
+do_tfidf  <- FALSE   # Part A
+do_topics <- FALSE   # Part B
+do_ner    <- FALSE   # Part C
+do_map    <- FALSE   # Part D
+
+# ---- text settings (Parts A, B, C) ----
+text_column  <- "text"      # the column with your text ("text" if you read a folder of .txt files)
+doc_column   <- "doc_id"    # a column that identifies each document
+group_column <- "REPLACE-ME"   # for Part A: a column that groups documents (a year, a newspaper)
+my_stopwords <- c("REPLACE-ME")   # junk words to drop: OCR fragments, words in every document
+
+# switches for the chunks below
+has_text   <- has_data && (do_tfidf || do_topics || do_ner)
+run_tfidf  <- has_text && do_tfidf
+run_topics <- has_text && do_topics
+run_ner    <- has_text && do_ner
+```
+
+**Q9.** Which part(s) did you choose, and why do they fit your question?
+
+>
+
+### Prepare your text (Parts A–C)
+
+Chunk 14 makes `docs`, one row per document, and `words`, one row per word, cleaned the way we did in E5: no stopwords, no tokens with digits, nothing shorter than three letters.
+
+```{r}
+#| eval: !expr has_text
+# Chunk 14
+docs <- my_data %>%
+  transmute(doc_id = as.character(.data[[doc_column]]),
+            text   = as.character(.data[[text_column]]),
+            group  = if (group_column != "REPLACE-ME") as.character(.data[[group_column]]) else "all") %>%
+  filter(!is.na(text))
+
+words <- docs %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words, by = "word") %>%
+  filter(!str_detect(word, "\\d"),
+         str_length(word) >= 3,
+         !word %in% my_stopwords)
+
+nrow(docs)
+words %>% count(word, sort = TRUE)
+```
+
+**Q10.** Look at the most frequent words. Which should go in `my_stopwords`? Add them and run Chunk 14 again.
+
+>
+
+------------------------------------------------------------------------
+
+## Part A: Distinctive words (tf-idf)
+
+In E5 you used Voyant's tf-idf to find words that set one issue of *The American City* apart from the others. `bind_tf_idf()` does the same in R: a word scores high in a group if it's frequent there and rare in the other groups. You need a `group_column` for this.
+
+```{r}
+#| eval: !expr run_tfidf
+#| fig-width: 10
+#| fig-height: 7
+# Chunk A1
+distinctive <- words %>%
+  count(group, word) %>%
+  bind_tf_idf(word, group, n) %>%
+  group_by(group) %>%
+  slice_max(tf_idf, n = 10, with_ties = FALSE) %>%
+  ungroup()
+
+distinctive %>%
+  mutate(word = reorder_within(word, tf_idf, group)) %>%
+  ggplot(aes(x = tf_idf, y = word)) +
+  geom_col(fill = "grey40") +
+  scale_y_reordered() +
+  facet_wrap(~ group, scales = "free_y") +
+  labs(title = "Words most distinctive of each group (tf-idf)", x = "tf-idf", y = NULL)
+
+ggsave("output/exercise8/tfidf.png", width = 10, height = 7, bg = "white")
+```
+
+If you have many groups (say, 40 years), the chart gets crowded. Group them more broadly first, for example by decade: set `group_column` to your year column and add `mutate(group = paste0(str_sub(group, 1, 3), "0s"))` at the end of the `docs` code in Chunk 14.
+
+**QA.** Which distinctive words are real differences in your sources, and which come from OCR errors, names, or one unusual document? Name one word you'd want to read in context.
+
+>
+
+------------------------------------------------------------------------
+
+## Part B: Topic modeling
+
+This is E5's topic model. Short documents (a headline, a catalog entry) are too small for a topic model, and very long ones (a whole book) are too big, so Chunk B1 cuts every document into pieces of `chunk_size` words, as we did with *The American City*.
+
+```{r}
+#| eval: !expr run_topics
+# Chunk B1
+library(topicmodels)   # LDA()
+
+chunk_size     <- 1000   # words per piece
+min_word_count <- 10     # drop words used fewer times than this in your whole corpus
+k              <- 10     # number of topics
+
+pieces <- words %>%
+  group_by(doc_id) %>%
+  mutate(piece = (row_number() - 1) %/% chunk_size) %>%
+  ungroup() %>%
+  mutate(piece_id = paste(doc_id, piece, sep = "_"))
+
+dtm <- pieces %>%
+  add_count(word, name = "total") %>%
+  filter(total >= min_word_count) %>%
+  count(piece_id, word) %>%
+  cast_dtm(piece_id, word, n)
+
+dtm
+```
+
+With a small corpus, lower `min_word_count`; with a very large one, raise it so the model runs faster. Then fit the model. This can take a few minutes.
+
+```{r}
+#| eval: !expr run_topics
+#| fig-height: 9
+# Chunk B2
+lda <- LDA(dtm, k = k, control = list(seed = 446))
+
+top_terms <- tidy(lda, matrix = "beta") %>%
+  group_by(topic) %>%
+  slice_max(beta, n = 10, with_ties = FALSE) %>%
+  ungroup()
+
+top_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot(aes(x = beta, y = term, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  scale_y_reordered() +
+  facet_wrap(~ topic, scales = "free_y", ncol = 3) +
+  labs(title = str_glue("Top 10 words in each of {k} topics"),
+       x = "How typical the word is of the topic (beta)", y = NULL)
+
+ggsave("output/exercise8/topics.png", width = 10, height = 10, bg = "white")
+write_csv(top_terms, "output/exercise8/topics.csv")
+```
+
+Which documents are most made of each topic? `gamma` is the share of each piece that comes from each topic:
+
+```{r}
+#| eval: !expr run_topics
+# Chunk B3
+tidy(lda, matrix = "gamma") %>%
+  group_by(topic) %>%
+  slice_max(gamma, n = 3, with_ties = FALSE) %>%
+  ungroup() %>%
+  arrange(topic)
+```
+
+**QB.** Label three topics from their words. Then read the top piece for one of them (find it in `pieces` by its `piece_id`). Does the label hold up? Try `k = 5` and `k = 20`: which number gives topics that make the most sense for *your* sources?
+
+>
+
+------------------------------------------------------------------------
+
+## Part C: Named entity recognition
+
+This is E6's model: it reads your text and tags people (`PER`), places (`LOC`), organizations (`ORG`), and other names (`MISC`). It was trained on English news from the 1990s, so expect mistakes on older or non-English text. Chunk C1 prepares the text the way the model needs it (one word per line, capitals and punctuation kept) and loads the model you downloaded in E6.
+
+```{r}
+#| eval: !expr run_ner
+# Chunk C1
+library(nametagger)
+
+ner_input <- docs %>%
+  mutate(sentence_id = row_number()) %>%
+  unnest_tokens(term, text, token = "words", to_lower = FALSE, strip_punct = FALSE) %>%
+  group_by(doc_id, sentence_id) %>%
+  summarize(text = str_c(term, collapse = "\n"), .groups = "drop")
+
+model_dir  <- tools::R_user_dir("nametagger", which = "cache")
+model_path <- file.path(model_dir, "english-conll-140408.ner")
+
+if (!file.exists(model_path)) {
+  dir.create(model_dir, recursive = TRUE, showWarnings = FALSE)
+  model <- nametagger_download_model("english-conll-140408", model_dir = model_dir)
+} else {
+  model <- nametagger_load_model(model_path)
+}
+```
+
+`tags_to_names()` is the function from E6 that glues "New" and "York" back into one name. Running the model on a large corpus takes a while, so the results are saved, and later runs read the saved file. The file goes in your `data/` folder, not `output/`, because it lists every name in your sources. **Delete `entities.csv` from your folder if you change your text and want to run the model again.**
+
+```{r}
+#| eval: !expr run_ner
+# Chunk C2
+tags_to_names <- function(tagged) {
+  tagged %>%
+    filter(entity != "O") %>%                       # keep only words inside a name
+    mutate(type = str_remove(entity, "^[BI]-"),     # "B-LOC" -> "LOC"
+           name_id = cumsum(str_starts(entity, "B-"))) %>%   # every B- starts a new name
+    group_by(doc_id, sentence_id, name_id, type) %>%
+    summarize(name = str_c(term, collapse = " "), .groups = "drop") %>%
+    mutate(name = str_replace_all(name, "\\s+([.,;:])", "\\1")) %>%   # "St . Louis" -> "St. Louis"
+    select(doc_id, type, name)
+}
+
+entities_file <- file.path(my_folder, "entities.csv")   # stays off GitHub (see Part 1)
+
+if (!file.exists(entities_file)) {
+  entities <- predict(model, ner_input) %>% tags_to_names()
+  write_csv(entities, entities_file)
+}
+
+entities <- read_csv(entities_file, show_col_types = FALSE)
+
+entities %>% count(type, sort = TRUE)
+
+entities %>%
+  count(type, name, sort = TRUE) %>%
+  group_by(type) %>%
+  slice_head(n = 15)
+```
+
+**QC.** Find two mistakes the model made (a place tagged as a person, a word that isn't a name). Is the model good enough for your sources, or would a list you make yourself (a gazetteer, as in E6 Part 4) work better?
+
+>
+
+------------------------------------------------------------------------
+
+## Part D: Mapping
+
+You can map your records three ways, depending on what your data has. Set **one** of these:
+
+- `lat_column` and `long_column`, if your data already has coordinates;
+- `place_column`, if it has addresses or place names, which Chunk D1 will geocode;
+- `use_ner_places <- TRUE`, to map the `LOC` names from Part C instead.
+
+```{r}
+# Chunk 15
+lat_column     <- "REPLACE-ME"
+long_column    <- "REPLACE-ME"
+place_column   <- "REPLACE-ME"
+use_ner_places <- FALSE
+
+geocoder     <- "osm"   # "census" for U.S. street addresses (as in E6); "osm" for place names anywhere
+place_suffix <- ""      # added to every place before geocoding, e.g. ", Singapore" or ", Muncie, IN"
+popup_column <- "REPLACE-ME"   # a column to show when you click a point (a title, a name, a date)
+
+# switches for the chunks below
+run_map         <- has_data && do_map
+needs_geocoding <- run_map && (place_column != "REPLACE-ME" || use_ner_places)
+has_coordinates <- run_map && lat_column != "REPLACE-ME"
+draw_map        <- needs_geocoding || has_coordinates
+```
+
+### Geocode (if you need to)
+
+Chunk D1 sends each **distinct** place to the geocoder once, and saves the results in `output/exercise8/places.csv`. On later runs, only places that aren't in that file are sent, so adding records doesn't geocode everything again. OpenStreetMap allows one request per second, so a few hundred places take a few minutes.
+
+```{r}
+#| eval: !expr needs_geocoding
+# Chunk D1
+library(tidygeocoder)
+
+if (use_ner_places) {
+  to_map <- entities %>% filter(type == "LOC") %>% transmute(place = name, label = doc_id)
+} else {
+  to_map <- my_data %>%
+    transmute(place = as.character(.data[[place_column]]),
+              label = if (popup_column != "REPLACE-ME") as.character(.data[[popup_column]]) else place)
+}
+
+places_file <- "output/exercise8/places.csv"
+
+if (file.exists(places_file)) {
+  places <- read_csv(places_file, show_col_types = FALSE)
+} else {
+  places <- tibble(place = character(), lat = numeric(), long = numeric())
+}
+
+new_places <- to_map %>%
+  filter(!is.na(place)) %>%
+  distinct(place) %>%
+  filter(!(place %in% places$place))
+
+if (nrow(new_places) > 0) {
+  message("Geocoding ", nrow(new_places), " places...")
+  geocoded <- new_places %>%
+    mutate(query = paste0(place, place_suffix)) %>%
+    geocode(address = query, method = geocoder, lat = lat, long = long) %>%
+    select(place, lat, long)
+  places <- bind_rows(places, geocoded)
+  write_csv(places, places_file)
+}
+
+to_map <- to_map %>%
+  left_join(places, by = "place")
+
+to_map %>% filter(is.na(lat)) %>% distinct(place)   # places the geocoder couldn't find
+```
+
+**QD1.** Look at the places the geocoder couldn't find, and five it did find. Did it put any of them in the wrong place (a modern street with the same name, the center of a city or a country)? Which of your places no longer exist?
+
+>
+
+### Make the maps
+
+If your data already has coordinates, Chunk D2 uses them directly.
+
+```{r}
+#| eval: !expr has_coordinates
+# Chunk D2
+to_map <- my_data %>%
+  transmute(lat   = as.numeric(.data[[lat_column]]),
+            long  = as.numeric(.data[[long_column]]),
+            label = if (popup_column != "REPLACE-ME") as.character(.data[[popup_column]]) else "")
+```
+
+A static map first. The `maps` package (E6) draws country outlines; `coord_quickmap()` zooms to your points.
+
+```{r}
+#| eval: !expr draw_map
+#| fig-width: 8
+#| fig-height: 7
+# Chunk D3
+mapped <- to_map %>% filter(!is.na(lat), !is.na(long))
+
+ggplot() +
+  geom_polygon(data = map_data("world"), aes(x = long, y = lat, group = group),
+               fill = "grey95", color = "grey70", linewidth = 0.2) +
+  geom_point(data = mapped, aes(x = long, y = lat), color = "#D55E00", alpha = 0.7) +
+  coord_quickmap(xlim = range(mapped$long) + c(-1, 1), ylim = range(mapped$lat) + c(-1, 1)) +
+  labs(title = "Your records on a map", x = NULL, y = NULL) +
+  theme_minimal()
+
+ggsave("output/exercise8/map.png", width = 8, height = 7, bg = "white")
+```
+
+If your points are all in one U.S. state or city, the world outline isn't much help. E7's `tigris` layers (county roads, water, city limits) make a better base: copy Chunks 5–7 from E7 and change the county.
+
+Then the interactive map, as in E7. Click a point to see its label.
+
+```{r}
+#| eval: !expr draw_map
+# Chunk D4
+library(leaflet)
+
+my_leaflet <- leaflet(mapped) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addCircleMarkers(lng = ~long, lat = ~lat,
+                   radius = 5, stroke = FALSE, fillOpacity = 0.8, color = "#D55E00",
+                   popup = ~htmltools::htmlEscape(label))
+
+my_leaflet
+
+htmlwidgets::saveWidget(my_leaflet, "output/exercise8/map.html")
+unlink("output/exercise8/map_files", recursive = TRUE)
+```
+
+**QD2.** What does your map show that a table of your records doesn't? What does it leave out (records with no place, places you couldn't locate, change over time)?
+
+>
+
+------------------------------------------------------------------------
+
+## Part 6: Reflect
+
+**Q11.** Make a short decision log, like the one in E5: at least **four** decisions you made today (a setting, a stopword, a category, the number of topics, a geocoder). For each, one sentence on what it might hide or distort.
+
+>
+
+**Q12.** Which chart or map from today, including your argument chart from Part 4, is closest to what you want for your **Data Visualization & Preliminary Analysis**? What would it take to finish it?
+
+>
+
+------------------------------------------------------------------------
+
+## Save, Commit, Push
+
+Render this file. If you ran Part B or C, rendering runs the model again (Part C reads the saved file), so it may take a few minutes. Then, in GitHub Desktop, check the list of changed files **before** you commit. Nothing from your `data/` folder should be on it, and your charts and counts shouldn't show anything you can't share (the names of living people, long passages of copyrighted text). Commit this file, the `.html`, and the `output/exercise8/` folder with a message like "Exercise 8: final project lab," and **Push origin**.
+
+::: {.callout-tip}
+## Sources
+
+- Matt Chambers, "The Gun Problem We Don't Mention," Tableau Public, 2016.
+- Nathan Yau, "[Defense Against Dishonest Charts](https://flowingdata.com/projects/dishonest-charts/)," FlowingData, 2025.
+- Roger D. Peng, *[Exploratory Data Analysis with R](https://bookdown.org/rdpeng/exdata/)*, chapter 4, "Exploratory Data Analysis Checklist."
+- Julia Silge and David Robinson, *[Text Mining with R](https://www.tidytextmining.com/)*, chapter 3, "Analyzing word and document frequency: tf-idf," and chapter 6, "Topic Modeling."
+- Bettina Grün and Kurt Hornik, "topicmodels: An R Package for Fitting Topic Models," *Journal of Statistical Software* 40, no. 13 (2011).
+- Jan Wijffels, `nametagger` (R package), with the English CoNLL-2003 model.
+- Jesse Cambon et al., `tidygeocoder` (R package); OpenStreetMap contributors (Nominatim); U.S. Census Bureau Geocoder.
+- The code in this exercise adapts Exercises 4–7.
+:::
